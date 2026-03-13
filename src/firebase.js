@@ -1,17 +1,14 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from "firebase/app"
+import { getFirestore } from "firebase/firestore"
 
-const firebaseConfig = {
+const firebaseConfig={
 
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
+  apiKey:process.env.REACT_APP_FIREBASE_KEY,
+  authDomain:process.env.REACT_APP_FIREBASE_DOMAIN,
+  projectId:process.env.REACT_APP_FIREBASE_PROJECT
 
-};
+}
 
-const app = initializeApp(firebaseConfig);
+const app=initializeApp(firebaseConfig)
 
-export const db = getFirestore(app);
+export const db=getFirestore(app)
