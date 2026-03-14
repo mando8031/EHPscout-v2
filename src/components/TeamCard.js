@@ -1,15 +1,20 @@
-function TeamCard({team,score}){
+function TeamCard({ team, score }) {
 
-  return(
+  const style = {
+    background: "linear-gradient(135deg,#f97316,#ea580c)",
+    padding: "14px",
+    borderRadius: "10px",
+    marginBottom: "10px",
+    color: "white",
+    fontWeight: "bold",
+    boxShadow: "0px 4px 10px rgba(0,0,0,0.4)"
+  };
 
-    <div className="bg-gray-800 p-3 rounded mb-2">
-
+  return (
+    <div style={style}>
       Team {team} — {score}
-
     </div>
-
-  )
-
+  );
 }
 
-export default TeamCard
+export default TeamCard;
