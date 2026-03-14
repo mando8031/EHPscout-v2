@@ -1,3 +1,10 @@
+const location = useLocation();
+const state = location.state;
+
+if(!state){
+  return <div>No match selected</div>;
+}
+
 import { useLocation,useNavigate } from "react-router-dom"
 
 function RobotSelect(){
