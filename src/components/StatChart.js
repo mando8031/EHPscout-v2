@@ -1,23 +1,30 @@
-import { BarChart,Bar,XAxis,YAxis,Tooltip } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
-function StatChart({data}){
+function StatChart({ data }) {
 
-  return(
+  return (
 
-    <BarChart width={700} height={400} data={data}>
+    <BarChart
+      width={700}
+      height={400}
+      data={data}
+      style={{ background: "#020617", padding: "20px", borderRadius: "10px" }}
+    >
 
-      <XAxis dataKey="team"/>
+      <CartesianGrid stroke="#334155" />
 
-      <YAxis/>
+      <XAxis dataKey="team" stroke="#e2e8f0" />
 
-      <Tooltip/>
+      <YAxis stroke="#e2e8f0" />
 
-      <Bar dataKey="overall"/>
+      <Tooltip />
+
+      <Bar dataKey="overall" fill="#22c55e" />
 
     </BarChart>
 
-  )
+  );
 
 }
 
-export default StatChart
+export default StatChart;
