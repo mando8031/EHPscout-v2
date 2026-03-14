@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-import { getMatches } from "../services/tbaService";
 import MatchCard from "../components/MatchCard";
+import { getMatches } from "../services/tbaService";
 
 const MatchList = () => {
   const { eventKey } = useParams();
+
   const [matches, setMatches] = useState([]);
 
   const navigate = useNavigate();
@@ -13,7 +13,12 @@ const MatchList = () => {
   useEffect(() => {
     if (!eventKey) return;
 
-    getMatches(eventKey).then(setMatches);
+    async function load() {
+      const data = await getMatches(eventKey);
+      setMatches(data);
+    }
+
+    load();
   }, [eventKey]);
 
   const openMatch = (match) => {
