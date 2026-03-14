@@ -1,47 +1,40 @@
-import { useParams, useNavigate } from "react-router-dom"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-import { getMatches } from "../services/tbaService"
-import MatchCard from "../components/MatchCard"
+import { getMatches } from "../services/tbaService";
+import MatchCard from "../components/MatchCard";
 
-function MatchList(){
+const MatchList = () => {
+  const { eventKey } = useParams();
+  const [matches, setMatches] = useState([]);
 
-  const {eventKey}=useParams()
+  const navigate = useNavigate();
 
-  const [matches,setMatches]=useState([])
+  useEffect(() => {
+    if (!eventKey) return;
 
-  const navigate=useNavigate()
+    getMatches(eventKey).then(setMatches);
+  }, [eventKey]);
 
-  useEffect(()=>{
+  const openMatch = (match) => {
+    navigate(`/scout/${eventKey}/${match.match_number}`);
+  };
 
-    getMatches(eventKey).then(setMatches)
-
-  },[eventKey])
-
-  return(
-
+  return (
     <div>
+      <h1 className="text-3xl mb-6">Matches</h1>
 
-      <h1 className="text-3xl mb-6">
-        Match Schedule
-      </h1>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-        {matches.map(match=>(
+      <div className="grid gap-4">
+        {matches.map((match) => (
           <MatchCard
             key={match.key}
             match={match}
-            onClick={()=>navigate("/robots",{state:match})}
+            onClick={() => openMatch(match)}
           />
         ))}
-
       </div>
-
     </div>
+  );
+};
 
-  )
-
-}
-
-export default MatchList
+export default MatchList;
