@@ -1,4 +1,4 @@
-import React from "react";
+console.log("APP LOADED");import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import EventSelect from "./pages/EventSelect";
