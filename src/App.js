@@ -1,46 +1,35 @@
+import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-import Navbar from "./components/Navbar";
 
 import EventSelect from "./pages/EventSelect";
 import MatchList from "./pages/MatchList";
-import RobotSelect from "./pages/RobotSelect";
 import ScoutForm from "./pages/ScoutForm";
 import Dashboard from "./pages/Dashboard";
 import Picklist from "./pages/Picklist";
+import RobotSelect from "./pages/RobotSelect";
 
-function App(){
-
-  return(
-
+function App() {
+  return (
     <BrowserRouter>
-
-      <Navbar/>
-
-      <div className="p-6">
-
+      <div style={{ padding: "20px", color: "white", background: "#111", minHeight: "100vh" }}>
         <Routes>
 
-          <Route path="/" element={<EventSelect/>} />
+          <Route path="/" element={<EventSelect />} />
 
-          <Route path="/matches/:eventKey" element={<MatchList/>} />
+          <Route path="/robots" element={<RobotSelect />} />
 
-          <Route path="/robots" element={<RobotSelect/>} />
+          <Route path="/matches/:eventKey" element={<MatchList />} />
 
-          <Route path="/scout" element={<ScoutForm/>} />
+          <Route path="/scout/:eventKey/:matchNumber" element={<ScoutForm />} />
 
-          <Route path="/dashboard" element={<Dashboard/>} />
+          <Route path="/dashboard" element={<Dashboard />} />
 
-          <Route path="/picklist" element={<Picklist/>} />
+          <Route path="/picklist" element={<Picklist />} />
 
         </Routes>
-
       </div>
-
     </BrowserRouter>
-
-  )
-
+  );
 }
 
-export default App
+export default App;
