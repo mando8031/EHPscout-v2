@@ -1,8 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #111827;
+  color: white;
+}
 
-body{
-  background:#111827;
-  color:white;
+button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+select, textarea, input {
+  padding: 8px;
+  margin: 6px 0;
 }
