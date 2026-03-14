@@ -3,50 +3,58 @@ import { useNavigate } from "react-router-dom";
 import { getEvents } from "../services/tbaService";
 
 const EventSelect = () => {
-  const [events, setEvents] = useState([]);
-  const [selected, setSelected] = useState("");
 
+  const [events, setEvents] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
+
     async function load() {
-      const data = await getEvents(new Date().getFullYear());
-      setEvents(data);
+      try {
+        const data = await getEvents(new Date().getFullYear());
+
+        if (Array.isArray(data)) {
+          setEvents(data);
+        } else {
+          console.error("TBA returned non-array:", data);
+          setEvents([]);
+        }
+
+      } catch (err) {
+        console.error("Failed to load events:", err);
+        setEvents([]);
+      }
     }
 
     load();
+
   }, []);
 
-  const loadEvent = () => {
-    if (!selected) return;
-    navigate(`/matches/${selected}`);
-  };
-
   return (
-    <div className="max-w-xl">
-      <h1 className="text-3xl mb-6">Select Event</h1>
+    <div style={{ padding: "30px" }}>
+      <h1>Select Event</h1>
 
-      <select
-        className="bg-gray-800 p-3 rounded w-full mb-4"
-        onChange={(e) => setSelected(e.target.value)}
-      >
-        <option value="">Select Event</option>
+      {events.length === 0 && (
+        <p>No events loaded (check TBA API key)</p>
+      )}
 
-        {events.map((event) => (
-          <option key={event.key} value={event.key}>
-            {event.name}
-          </option>
-        ))}
-      </select>
-
-      <button
-        className="bg-blue-600 px-6 py-3 rounded"
-        onClick={loadEvent}
-      >
-        Load Matches
-      </button>
+      {events.map(event => (
+        <div
+          key={event.key}
+          style={{
+            padding: "10px",
+            margin: "5px",
+            background: "#333",
+            cursor: "pointer"
+          }}
+          onClick={() => navigate(`/matches/${event.key}`)}
+        >
+          {event.name}
+        </div>
+      ))}
     </div>
   );
+
 };
 
 export default EventSelect;
