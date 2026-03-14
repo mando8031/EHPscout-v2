@@ -1,46 +1,34 @@
-import { useEffect,useState } from "react"
-import { collection,getDocs } from "firebase/firestore"
-import { db } from "../firebase"
+import React, { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
 
-import StatChart from "../components/StatChart"
-import { calculateTeamStats } from "../utils/statsCalculator"
+import { db } from "../firebase";
+import StatChart from "../components/StatChart";
+import { calculateTeamStats } from "../utils/statsCalculator";
 
-function Dashboard(){
+const Dashboard = () => {
+  const [stats, setStats] = useState([]);
 
-  const [stats,setStats]=useState([])
+  useEffect(() => {
+    const load = async () => {
+      const snapshot = await getDocs(collection(db, "scouting"));
 
-  useEffect(()=>{
+      const data = snapshot.docs.map((doc) => doc.data());
 
-    async function load(){
+      const teamStats = calculateTeamStats(data);
 
-      const snapshot=await getDocs(collection(db,"scouting"))
+      setStats(teamStats);
+    };
 
-      const data=snapshot.docs.map(doc=>doc.data())
+    load();
+  }, []);
 
-      const calculated=calculateTeamStats(data)
-
-      setStats(calculated)
-
-    }
-
-    load()
-
-  },[])
-
-  return(
-
+  return (
     <div>
+      <h1 className="text-3xl mb-6">Team Stats</h1>
 
-      <h1 className="text-3xl mb-6">
-        Team Statistics
-      </h1>
-
-      <StatChart data={stats}/>
-
+      <StatChart data={stats} />
     </div>
+  );
+};
 
-  )
-
-}
-
-export default Dashboard
+export default Dashboard;
