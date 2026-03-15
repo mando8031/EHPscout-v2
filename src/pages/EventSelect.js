@@ -11,21 +11,15 @@ const navigate = useNavigate();
 
 useEffect(function () {
 async function load() {
-try {
 const data = await getEvents(new Date().getFullYear());
 
 ```
-    if (Array.isArray(data)) {
-      const sorted = data.slice().sort(function (a, b) {
-        return new Date(a.start_date) - new Date(b.start_date);
-      });
+  if (Array.isArray(data)) {
+    const sorted = data.slice().sort(function (a, b) {
+      return new Date(a.start_date) - new Date(b.start_date);
+    });
 
-      setEvents(sorted);
-    } else {
-      console.error("Events API did not return an array:", data);
-    }
-  } catch (err) {
-    console.error("Failed to load events:", err);
+    setEvents(sorted);
   }
 }
 
@@ -103,7 +97,7 @@ return (
         </div>
 
         <div>
-          {event.start_date} → {event.end_date}
+          {event.start_date} - {event.end_date}
         </div>
 
         <div>
