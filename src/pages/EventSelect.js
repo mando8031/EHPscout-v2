@@ -75,7 +75,7 @@ return (
     <button onClick={function () { setFilter("finished"); }}>Finished</button>
   </div>
 
-  {filteredEvents.map(function (event) {
+  {filteredEvents && filteredEvents.map(function (event) {
     const status = getStatus(event);
 
     return (
