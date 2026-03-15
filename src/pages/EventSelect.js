@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { getEvents } from "../services/tbaService";
 
 export default function EventSelect() {
-const [events, setEvents] = useState([]);
 const navigate = useNavigate();
+const [events, setEvents] = useState([]);
 
-useEffect(() => {
+useEffect(function () {
 async function loadEvents() {
 const data = await getEvents(new Date().getFullYear());
 if (Array.isArray(data)) {
@@ -24,22 +24,28 @@ return (
 <div style={{ padding: 20 }}> <h1>Select Event</h1>
 
 ```
-  {events.map((event) => (
-    <div
-      key={event.key}
-      style={{
-        padding: 10,
-        marginBottom: 8,
-        background: "#333",
-        color: "#fff",
-        borderRadius: 6,
-        cursor: "pointer"
-      }}
-      onClick={() => navigate("/matches/" + event.key)}
-    >
-      {event.name}
-    </div>
-  ))}
+  {events.length === 0 && <div>Loading events...</div>}
+
+  {events.map(function (event) {
+    return (
+      <div
+        key={event.key}
+        style={{
+          padding: 10,
+          marginBottom: 10,
+          backgroundColor: "#333",
+          color: "#ffffff",
+          borderRadius: 6,
+          cursor: "pointer"
+        }}
+        onClick={function () {
+          navigate("/matches/" + event.key);
+        }}
+      >
+        {event.name}
+      </div>
+    );
+  })}
 </div>
 ```
 
