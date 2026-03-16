@@ -43,9 +43,12 @@ const unsubscribe = onAuthStateChanged(auth, async (currentUser)=>{
     const snap = await getDoc(ref);
 
     if(snap.exists()){
+
       const data = snap.data();
+
       setRole(data.role);
       setTeamId(data.teamId);
+
     }
 
   }
@@ -70,7 +73,7 @@ return (
 
   <div style={{minHeight:"100vh",background:"#111",color:"white"}}>
 
-    {/* Navbar only after joining a team */}
+    {/* Only show navbar after joining a team */}
     {user && teamId && <Navbar role={role}/>}
 
     <div style={{padding:"20px"}}>
@@ -79,9 +82,16 @@ return (
 
         <Route path="/login" element={<ScoutLogin/>}/>
 
+        {/* TEAM SETUP PAGE */}
         <Route
           path="/team"
-          element={user ? <TeamSetup/> : <Navigate to="/login"/>}
+          element={
+            !user
+              ? <Navigate to="/login"/>
+              : teamId
+              ? <Navigate to="/dashboard"/>
+              : <TeamSetup/>
+          }
         />
 
         <Route
@@ -94,11 +104,13 @@ return (
           element={user ? <JoinTeam/> : <Navigate to="/login"/>}
         />
 
+        {/* MAIN DASHBOARD */}
         <Route
           path="/dashboard"
           element={user && teamId ? <Dashboard/> : <Navigate to="/team"/>}
         />
 
+        {/* ADMIN PAGE */}
         <Route
           path="/admin"
           element={user && role==="admin" ? <AdminPage/> : <Navigate to="/dashboard"/>}
