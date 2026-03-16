@@ -3,122 +3,99 @@ import { useNavigate } from "react-router-dom";
 import { getEvents } from "../services/tbaService";
 
 const EventSelect = () => {
+  const [events, setEvents] = useState([]);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
-  const [events, setEvents] = useState(null); // null = not loaded yet
-  const [selected, setSelected] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
+    async function load() {
+      const data = await getEvents(new Date().getFullYear());
 
-    const year = new Date().getFullYear();
+      if (Array.isArray(data)) {
+        // sort by start date
+        const sorted = data.sort(
+          (a, b) => new Date(a.start_date) - new Date(b.start_date)
+        );
 
-    async function loadEvents() {
-
-      console.log("Loading events for year:", year);
-
-      try {
-
-        const data = await getEvents(year);
-
-        console.log("TBA events response:", data);
-
-        if (Array.isArray(data)) {
-
-          console.log("Events loaded:", data.length);
-
-          setEvents(data);
-
-        } else {
-
-          console.warn("Unexpected event response:", data);
-          setEvents([]);
-
-        }
-
-      } catch (err) {
-
-        console.error("Event loading failed:", err);
-        setEvents([]);
-
+        setEvents(sorted);
       }
-
     }
 
-    loadEvents();
-
+    load();
   }, []);
 
-  const openEvent = () => {
+  const today = new Date();
 
-    if (!selected) {
-      console.warn("No event selected");
-      return;
-    }
+  function getStatus(event) {
+    const start = new Date(event.start_date);
+    const end = new Date(event.end_date);
 
-    console.log("Opening event:", selected);
-
-    navigate(`/matches/${selected}`);
-
-  };
-
-  // Loading state
-  if (events === null) {
-    return (
-      <div>
-        <h1 className="text-3xl mb-6">Select Event</h1>
-        <p>Loading events...</p>
-      </div>
-    );
+    if (today < start) return "upcoming";
+    if (today > end) return "finished";
+    return "active";
   }
 
-  // No events
-  if (events.length === 0) {
-    return (
-      <div>
-        <h1 className="text-3xl mb-6">Select Event</h1>
-        <p>No events available.</p>
-      </div>
-    );
-  }
+  const filteredEvents = events
+    .filter((event) =>
+      event.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter((event) => {
+      if (filter === "all") return true;
+      return getStatus(event) === filter;
+    });
 
   return (
+    <div style={{ padding: "30px", maxWidth: "900px" }}>
+      <h1>Event Select</h1>
 
-    <div>
-
-      <h1 className="text-3xl mb-6">
-        Select Event
-      </h1>
-
-      <select
-        value={selected}
-        onChange={(e) => {
-          console.log("Event selected:", e.target.value);
-          setSelected(e.target.value);
+      <input
+        type="text"
+        placeholder="Search events..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          padding: "10px",
+          width: "100%",
+          marginBottom: "15px",
         }}
-      >
+      />
 
-        <option value="">
-          Choose an event
-        </option>
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={() => setFilter("all")}>All</button>
+        <button onClick={() => setFilter("active")}>Active</button>
+        <button onClick={() => setFilter("upcoming")}>Upcoming</button>
+        <button onClick={() => setFilter("finished")}>Finished</button>
+      </div>
 
-        {events.map((event) => (
-          <option key={event.key} value={event.key}>
-            {event.name}
-          </option>
-        ))}
+      {filteredEvents.map((event) => {
+        const status = getStatus(event);
 
-      </select>
+        return (
+          <div
+            key={event.key}
+            style={{
+              padding: "12px",
+              marginBottom: "8px",
+              background: "#2c2c2c",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate(`/matches/${event.key}`)}
+          >
+            <div style={{ fontWeight: "bold" }}>{event.name}</div>
 
-      <br /><br />
+            <div>
+              {event.start_date} → {event.end_date}
+            </div>
 
-      <button onClick={openEvent}>
-        View Matches
-      </button>
-
+            <div>Status: {status}</div>
+          </div>
+        );
+      })}
     </div>
-
   );
-
 };
 
 export default EventSelect;
