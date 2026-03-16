@@ -9,7 +9,7 @@ const [loading, setLoading] = useState(true);
 
 useEffect(()=>{
 
-```
+
 async function loadData(){
 
   try {
@@ -59,7 +59,7 @@ async function loadData(){
 }
 
 loadData();
-```
+
 
 },[]);
 
@@ -70,7 +70,7 @@ return ( <div className="p-6"> <h1 className="text-2xl">Loading rankings...</h1>
 
 return (
 
-```
+
 <div className="p-6">
 
   <h1 className="text-3xl font-bold mb-6">
@@ -101,7 +101,6 @@ return (
   </div>
 
 </div>
-```
 
 );
 
