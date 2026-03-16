@@ -4,39 +4,61 @@ import {
 signInWithEmailAndPassword,
 createUserWithEmailAndPassword
 } from "firebase/auth";
-import { auth } from "../firebase";
+
+import { doc, setDoc } from "firebase/firestore";
+
+import { auth, db } from "../firebase";
 
 const ScoutLogin = () => {
 
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [creating, setCreating] = useState(false);
-
 const navigate = useNavigate();
 
-async function handleSubmit(e) {
+const [email,setEmail] = useState("");
+const [password,setPassword] = useState("");
+const [name,setName] = useState("");
+const [creating,setCreating] = useState(false);
+
+async function handleLogin(e){
 
 
 e.preventDefault();
 
-try {
+try{
 
-  if (creating) {
+  await signInWithEmailAndPassword(auth,email,password);
 
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("Account created!");
+  navigate("/dashboard");
 
-  } else {
+}catch(err){
 
-    await signInWithEmailAndPassword(auth, email, password);
+  alert(err.message);
 
-  }
+}
 
-  navigate("/");
 
-} catch (err) {
+}
 
-  console.error(err);
+async function handleCreateAccount(e){
+
+
+e.preventDefault();
+
+try{
+
+  const result = await createUserWithEmailAndPassword(auth,email,password);
+
+  const uid = result.user.uid;
+
+  await setDoc(doc(db,"users",uid),{
+    name:name,
+    role:"scout",
+    teamId:null
+  });
+
+  navigate("/team");
+
+}catch(err){
+
   alert(err.message);
 
 }
@@ -47,73 +69,83 @@ try {
 return (
 
 
-<div style={{
-  maxWidth: "400px",
-  margin: "auto",
-  padding: "40px"
-}}>
+<div style={{maxWidth:"400px",margin:"auto"}}>
 
-  <h1 style={{ marginBottom: "20px" }}>
-    {creating ? "Create Account" : "Scout Login"}
-  </h1>
+  <h1>Scout Login</h1>
 
-  <form onSubmit={handleSubmit}>
+  {!creating && (
 
-    <input
-      type="email"
-      placeholder="Email"
-      value={email}
-      onChange={(e)=>setEmail(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "12px",
-        marginBottom: "10px"
-      }}
-    />
+    <form onSubmit={handleLogin}>
 
-    <input
-      type="password"
-      placeholder="Password"
-      value={password}
-      onChange={(e)=>setPassword(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "12px",
-        marginBottom: "20px"
-      }}
-    />
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e)=>setEmail(e.target.value)}
+        style={{width:"100%",padding:"10px",marginBottom:"10px"}}
+      />
 
-    <button
-      type="submit"
-      style={{
-        width: "100%",
-        padding: "12px",
-        background: "#3498db",
-        color: "white",
-        border: "none"
-      }}
-    >
-      {creating ? "Create Account" : "Login"}
-    </button>
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e)=>setPassword(e.target.value)}
+        style={{width:"100%",padding:"10px",marginBottom:"10px"}}
+      />
 
-  </form>
+      <button style={{width:"100%",padding:"10px"}}>
+        Login
+      </button>
 
-  <button
-    onClick={()=>setCreating(!creating)}
-    style={{
-      marginTop: "20px",
-      background: "none",
-      border: "none",
-      color: "#3498db",
-      cursor: "pointer"
-    }}
-  >
-    {creating
-      ? "Already have an account? Login"
-      : "Create a new account"}
-  </button>
+      <p style={{marginTop:"15px",cursor:"pointer"}} onClick={()=>setCreating(true)}>
+        Create Account
+      </p>
+
+    </form>
+
+  )}
+
+  {creating && (
+
+    <form onSubmit={handleCreateAccount}>
+
+      <input
+        placeholder="Scout Name"
+        value={name}
+        onChange={(e)=>setName(e.target.value)}
+        style={{width:"100%",padding:"10px",marginBottom:"10px"}}
+      />
+
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={(e)=>setEmail(e.target.value)}
+        style={{width:"100%",padding:"10px",marginBottom:"10px"}}
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e)=>setPassword(e.target.value)}
+        style={{width:"100%",padding:"10px",marginBottom:"10px"}}
+      />
+
+      <button style={{width:"100%",padding:"10px"}}>
+        Create Account
+      </button>
+
+      <p style={{marginTop:"15px",cursor:"pointer"}} onClick={()=>setCreating(false)}>
+        Back to Login
+      </p>
+
+    </form>
+
+  )}
 
 </div>
+
 
 );
 
