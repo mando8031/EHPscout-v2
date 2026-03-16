@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+
+import { auth } from "./firebase";
 
 import Navbar from "./components/Navbar";
 
@@ -11,15 +14,28 @@ import RobotSelect from "./pages/RobotSelect";
 import Dashboard from "./pages/Dashboard";
 import Picklist from "./pages/Picklist";
 
+import CreateTeam from "./pages/CreateTeam";
+import JoinTeam from "./pages/JoinTeam";
+
 function App() {
 
-const [scoutName, setScoutName] = useState(
-localStorage.getItem("scoutName")
-);
+const [user, setUser] = useState(null);
+const [loading, setLoading] = useState(true);
 
-function handleLogin(name) {
-localStorage.setItem("scoutName", name);
-setScoutName(name);
+useEffect(() => {
+
+
+const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+  setUser(currentUser);
+  setLoading(false);
+});
+
+return () => unsubscribe();
+
+}, []);
+
+if (loading) {
+return <div>Loading...</div>;
 }
 
 return (
@@ -35,63 +51,55 @@ return (
 
       <Routes>
 
+        {/* Login */}
+        <Route path="/login" element={<ScoutLogin />} />
+
+        {/* Admin creates scouting team */}
         <Route
-          path="/login"
-          element={<ScoutLogin onLogin={handleLogin} />}
+          path="/create-team"
+          element={user ? <CreateTeam /> : <Navigate to="/login" />}
         />
 
+        {/* Scouts join team using QR link */}
+        <Route
+          path="/join/:code"
+          element={user ? <JoinTeam /> : <Navigate to="/login" />}
+        />
+
+        {/* Event selection */}
         <Route
           path="/"
-          element={
-            scoutName
-              ? <EventSelect />
-              : <Navigate to="/login" />
-          }
+          element={user ? <EventSelect /> : <Navigate to="/login" />}
         />
 
+        {/* Match list */}
         <Route
           path="/matches/:eventKey"
-          element={
-            scoutName
-              ? <MatchList />
-              : <Navigate to="/login" />
-          }
+          element={user ? <MatchList /> : <Navigate to="/login" />}
         />
 
+        {/* Scout match */}
         <Route
           path="/scout/:eventKey/:matchNumber"
-          element={
-            scoutName
-              ? <ScoutForm />
-              : <Navigate to="/login" />
-          }
+          element={user ? <ScoutForm /> : <Navigate to="/login" />}
         />
 
+        {/* Robot analysis */}
         <Route
           path="/robots"
-          element={
-            scoutName
-              ? <RobotSelect />
-              : <Navigate to="/login" />
-          }
+          element={user ? <RobotSelect /> : <Navigate to="/login" />}
         />
 
+        {/* Rankings dashboard */}
         <Route
           path="/dashboard"
-          element={
-            scoutName
-              ? <Dashboard />
-              : <Navigate to="/login" />
-          }
+          element={user ? <Dashboard /> : <Navigate to="/login" />}
         />
 
+        {/* Alliance picklist */}
         <Route
           path="/picklist"
-          element={
-            scoutName
-              ? <Picklist />
-              : <Navigate to="/login" />
-          }
+          element={user ? <Picklist /> : <Navigate to="/login" />}
         />
 
       </Routes>
@@ -101,7 +109,6 @@ return (
   </div>
 
 </BrowserRouter>
-
 
 );
 
