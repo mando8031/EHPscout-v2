@@ -14,6 +14,7 @@ import RobotSelect from "./pages/RobotSelect";
 import Dashboard from "./pages/Dashboard";
 import Picklist from "./pages/Picklist";
 
+import TeamSetup from "./pages/TeamSetup";
 import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
 
@@ -26,8 +27,10 @@ useEffect(() => {
 
 
 const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+
   setUser(currentUser);
   setLoading(false);
+
 });
 
 return () => unsubscribe();
@@ -54,13 +57,19 @@ return (
         {/* Login */}
         <Route path="/login" element={<ScoutLogin />} />
 
-        {/* Admin creates scouting team */}
+        {/* Team setup (create or join team) */}
+        <Route
+          path="/team"
+          element={user ? <TeamSetup /> : <Navigate to="/login" />}
+        />
+
+        {/* Admin create team */}
         <Route
           path="/create-team"
           element={user ? <CreateTeam /> : <Navigate to="/login" />}
         />
 
-        {/* Scouts join team using QR link */}
+        {/* Join team from QR */}
         <Route
           path="/join/:code"
           element={user ? <JoinTeam /> : <Navigate to="/login" />}
@@ -84,7 +93,7 @@ return (
           element={user ? <ScoutForm /> : <Navigate to="/login" />}
         />
 
-        {/* Robot analysis */}
+        {/* Robot stats */}
         <Route
           path="/robots"
           element={user ? <RobotSelect /> : <Navigate to="/login" />}
@@ -109,6 +118,7 @@ return (
   </div>
 
 </BrowserRouter>
+
 
 );
 
