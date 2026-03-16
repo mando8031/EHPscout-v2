@@ -1,98 +1,197 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { addDoc, collection } from "firebase/firestore";
+import { useParams, useNavigate } from "react-router-dom";
+
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 
 const ScoutForm = () => {
-  const navigate = useNavigate();
+
   const { eventKey, matchNumber } = useParams();
+  const navigate = useNavigate();
 
   const [team, setTeam] = useState("");
-  const [accuracy, setAccuracy] = useState(5);
-  const [auton, setAuton] = useState(5);
-  const [movement, setMovement] = useState(2);
+  const [autoScore, setAutoScore] = useState(0);
+  const [teleopScore, setTeleopScore] = useState(0);
+  const [endgame, setEndgame] = useState("none");
   const [notes, setNotes] = useState("");
 
-  if (!eventKey || !matchNumber) {
-    return (
-      <div style={{ padding: "40px" }}>
-        <h2>No match selected</h2>
-        <button onClick={() => navigate("/")}>
-          Go back
-        </button>
-      </div>
-    );
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitScout(e) {
+
+    e.preventDefault();
+
+    if (!team) {
+      alert("Please enter a team number");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+
+      const payload = {
+        eventKey: eventKey,
+        matchNumber: Number(matchNumber),
+
+        team: Number(team),
+
+        autoScore: Number(autoScore),
+        teleopScore: Number(teleopScore),
+
+        endgame: endgame,
+
+        notes: notes,
+
+        created: serverTimestamp()
+      };
+
+      await addDoc(collection(db, "scouting"), payload);
+
+      alert("Scouting data saved!");
+
+      navigate(-1);
+
+    } catch (err) {
+
+      console.error("Error saving scouting data:", err);
+
+      alert("Failed to save scouting data");
+
+    }
+
+    setSubmitting(false);
+
   }
 
-  const submit = async () => {
-    await addDoc(collection(db, "scouting"), {
-      event: eventKey,
-      team: team,
-      match: Number(matchNumber),
-      accuracy: Number(accuracy),
-      auton: Number(auton),
-      movement: Number(movement),
-      notes,
-      timestamp: Date.now(),
-    });
-
-    alert("Scouting data saved");
-    navigate("/");
-  };
-
   return (
-    <div style={{ maxWidth: "600px", padding: "20px" }}>
-      <h2>
-        Event {eventKey} — Match {matchNumber}
-      </h2>
 
-      <label>Team Number</label>
-      <input
-        type="number"
-        value={team}
-        onChange={(e) => setTeam(e.target.value)}
-      />
+    <div
+      style={{
+        maxWidth: "600px",
+        margin: "auto",
+        padding: "20px"
+      }}
+    >
 
-      <label>Accuracy</label>
-      <input
-        type="range"
-        min="0"
-        max="10"
-        value={accuracy}
-        onChange={(e) => setAccuracy(e.target.value)}
-      />
+      <h1 style={{ marginBottom: "20px" }}>
+        Scout Match {matchNumber}
+      </h1>
 
-      <label>Auton</label>
-      <input
-        type="range"
-        min="0"
-        max="10"
-        value={auton}
-        onChange={(e) => setAuton(e.target.value)}
-      />
+      <form onSubmit={submitScout}>
 
-      <label>Movement</label>
-      <select
-        value={movement}
-        onChange={(e) => setMovement(e.target.value)}
-      >
-        <option value="1">Bad</option>
-        <option value="2">Average</option>
-        <option value="3">Good</option>
-      </select>
+        {/* TEAM NUMBER */}
 
-      <label>Notes</label>
-      <textarea
-        onChange={(e) => setNotes(e.target.value)}
-      />
+        <label>Team Number</label>
 
-      <br />
+        <input
+          type="number"
+          value={team}
+          onChange={(e) => setTeam(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: "18px",
+            marginBottom: "20px"
+          }}
+        />
 
-      <button onClick={submit}>
-        Submit
-      </button>
+        {/* AUTO SCORE */}
+
+        <label>Auto Score</label>
+
+        <input
+          type="number"
+          value={autoScore}
+          onChange={(e) => setAutoScore(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: "18px",
+            marginBottom: "20px"
+          }}
+        />
+
+        {/* TELEOP SCORE */}
+
+        <label>Teleop Score</label>
+
+        <input
+          type="number"
+          value={teleopScore}
+          onChange={(e) => setTeleopScore(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: "18px",
+            marginBottom: "20px"
+          }}
+        />
+
+        {/* ENDGAME */}
+
+        <label>Endgame</label>
+
+        <select
+          value={endgame}
+          onChange={(e) => setEndgame(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: "18px",
+            marginBottom: "20px"
+          }}
+        >
+
+          <option value="none">None</option>
+          <option value="park">Park</option>
+          <option value="climb">Climb</option>
+
+        </select>
+
+        {/* NOTES */}
+
+        <label>Notes</label>
+
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={4}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: "16px",
+            marginBottom: "20px"
+          }}
+        />
+
+        {/* SUBMIT BUTTON */}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          style={{
+            width: "100%",
+            padding: "16px",
+            fontSize: "20px",
+            background: "#2ecc71",
+            border: "none",
+            borderRadius: "8px",
+            color: "white",
+            cursor: "pointer"
+          }}
+        >
+
+          {submitting ? "Saving..." : "Submit Scouting"}
+
+        </button>
+
+      </form>
+
     </div>
+
   );
+
 };
 
 export default ScoutForm;
