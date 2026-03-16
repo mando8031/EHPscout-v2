@@ -1,22 +1,25 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ScoutLogin = () => {
+const ScoutLogin = ({ onLogin }) => {
 
 const [name, setName] = useState("");
 const navigate = useNavigate();
 
-function startScouting() {
+function handleSubmit(e) {
 
+
+e.preventDefault();
 
 if (!name) {
   alert("Enter scout name");
   return;
 }
 
-localStorage.setItem("scoutName", name);
+onLogin(name);
 
 navigate("/");
+
 
 }
 
@@ -33,35 +36,39 @@ return (
     Scout Login
   </h1>
 
-  <input
-    type="text"
-    placeholder="Scout Name"
-    value={name}
-    onChange={(e)=>setName(e.target.value)}
-    style={{
-      width: "100%",
-      padding: "15px",
-      fontSize: "18px",
-      marginBottom: "20px"
-    }}
-  />
+  <form onSubmit={handleSubmit}>
 
-  <button
-    onClick={startScouting}
-    style={{
-      width: "100%",
-      padding: "15px",
-      fontSize: "18px",
-      background: "#3498db",
-      color: "white",
-      border: "none",
-      borderRadius: "10px"
-    }}
-  >
+    <input
+      type="text"
+      placeholder="Scout Name"
+      value={name}
+      onChange={(e)=>setName(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "15px",
+        fontSize: "18px",
+        marginBottom: "20px"
+      }}
+    />
 
-    Start Scouting
+    <button
+      type="submit"
+      style={{
+        width: "100%",
+        padding: "15px",
+        fontSize: "18px",
+        background: "#3498db",
+        color: "white",
+        border: "none",
+        borderRadius: "10px"
+      }}
+    >
 
-  </button>
+      Start Scouting
+
+    </button>
+
+  </form>
 
 </div>
 
