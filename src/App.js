@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-import { auth } from "./firebase";
+import { auth, db } from "./firebase";
 
 import Navbar from "./components/Navbar";
 
@@ -19,17 +20,35 @@ import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
 import AccountSettings from "./pages/AccountSettings";
 
+import AdminPanel from "./pages/AdminPanel";
+import ScoutHome from "./pages/ScoutHome";
+
 function App() {
 
 const [user, setUser] = useState(null);
+const [role, setRole] = useState(null);
 const [loading, setLoading] = useState(true);
 
 useEffect(() => {
 
 
-const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+
   setUser(currentUser);
+
+  if (currentUser) {
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const snap = await getDoc(userRef);
+
+    if (snap.exists()) {
+      setRole(snap.data().role);
+    }
+
+  }
+
   setLoading(false);
+
 });
 
 return () => unsubscribe();
@@ -48,70 +67,69 @@ return (
 
   <div style={{ minHeight: "100vh", background: "#111", color: "white" }}>
 
-    <Navbar />
+    <Navbar role={role} />
 
     <div style={{ padding: "20px" }}>
 
       <Routes>
 
-        {/* Login */}
         <Route path="/login" element={<ScoutLogin />} />
 
-        {/* Team setup */}
         <Route
           path="/team"
           element={user ? <TeamSetup /> : <Navigate to="/login" />}
         />
 
-        {/* Create team */}
         <Route
           path="/create-team"
-          element={user ? <CreateTeam /> : <Navigate to="/login" />}
+          element={user && role === "admin" ? <CreateTeam /> : <Navigate to="/" />}
         />
 
-        {/* Join team via QR */}
         <Route
           path="/join/:code"
           element={user ? <JoinTeam /> : <Navigate to="/login" />}
         />
 
-        {/* Event select */}
+        <Route
+          path="/admin"
+          element={user && role === "admin" ? <AdminPanel /> : <Navigate to="/" />}
+        />
+
+        <Route
+          path="/scout-home"
+          element={user ? <ScoutHome /> : <Navigate to="/login" />}
+        />
+
         <Route
           path="/"
           element={user ? <EventSelect /> : <Navigate to="/login" />}
         />
 
-        {/* Match list */}
         <Route
           path="/matches/:eventKey"
           element={user ? <MatchList /> : <Navigate to="/login" />}
         />
 
-        {/* Scout form */}
         <Route
           path="/scout/:eventKey/:matchNumber"
           element={user ? <ScoutForm /> : <Navigate to="/login" />}
         />
 
-        {/* Robot stats */}
         <Route
           path="/robots"
           element={user ? <RobotSelect /> : <Navigate to="/login" />}
         />
 
-        {/* Dashboard */}
         <Route
           path="/dashboard"
           element={user ? <Dashboard /> : <Navigate to="/login" />}
         />
 
-        {/* Picklist */}
         <Route
           path="/picklist"
           element={user ? <Picklist /> : <Navigate to="/login" />}
         />
 
-        {/* Account settings */}
         <Route
           path="/account"
           element={user ? <AccountSettings /> : <Navigate to="/login" />}
@@ -124,6 +142,7 @@ return (
   </div>
 
 </BrowserRouter>
+
 
 );
 
