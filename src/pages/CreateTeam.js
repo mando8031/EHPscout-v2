@@ -7,67 +7,85 @@ import {
 collection,
 addDoc,
 doc,
-updateDoc
+updateDoc,
+query,
+where,
+getDocs
 } from "firebase/firestore";
 
-function generateCode(){
-return Math.random().toString(36).substring(2,8).toUpperCase();
+function generateCode() {
+return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 const CreateTeam = () => {
 
 const navigate = useNavigate();
 
-const [teamName,setTeamName] = useState("");
-const [creating,setCreating] = useState(false);
+const [teamName, setTeamName] = useState("");
+const [creating, setCreating] = useState(false);
 
-async function createTeam(e){
+async function createTeam(e) {
 
 
 e.preventDefault();
 
-if(!teamName){
+if (!teamName.trim()) {
   alert("Enter a team name");
   return;
 }
 
 const user = auth.currentUser;
 
-if(!user){
+if (!user) {
   alert("Not logged in");
   return;
 }
 
 setCreating(true);
 
-try{
+try {
+
+  // Prevent duplicate team names
+  const teamQuery = query(
+    collection(db, "teams"),
+    where("name", "==", teamName.trim())
+  );
+
+  const existingTeams = await getDocs(teamQuery);
+
+  if (!existingTeams.empty) {
+    alert("A team with this name already exists.");
+    setCreating(false);
+    return;
+  }
 
   const joinCode = generateCode();
 
   const teamRef = await addDoc(
-    collection(db,"teams"),
+    collection(db, "teams"),
     {
-      name: teamName,
+      name: teamName.trim(),
       joinCode: joinCode,
-      createdBy: user.uid
+      createdBy: user.uid,
+      createdAt: new Date()
     }
   );
 
   const teamId = teamRef.id;
 
+  // Update the user document
   await updateDoc(
-    doc(db,"users",user.uid),
+    doc(db, "users", user.uid),
     {
       role: "admin",
       teamId: teamId
     }
   );
 
-  alert("Team created!");
+  // Force reload so App.js reads the updated teamId
+  window.location.href = "/dashboard";
 
-  navigate("/dashboard");
-
-}catch(err){
+} catch (err) {
 
   console.error(err);
   alert("Error creating team");
@@ -82,7 +100,7 @@ setCreating(false);
 return (
 
 
-<div style={{maxWidth:"500px",margin:"auto"}}>
+<div style={{ maxWidth: "500px", margin: "auto" }}>
 
   <h1>Create Team</h1>
 
@@ -91,18 +109,18 @@ return (
     <input
       placeholder="Team Name"
       value={teamName}
-      onChange={(e)=>setTeamName(e.target.value)}
+      onChange={(e) => setTeamName(e.target.value)}
       style={{
-        width:"100%",
-        padding:"10px",
-        marginBottom:"15px"
+        width: "100%",
+        padding: "10px",
+        marginBottom: "15px"
       }}
     />
 
     <button
       style={{
-        width:"100%",
-        padding:"12px"
+        width: "100%",
+        padding: "12px"
       }}
     >
       {creating ? "Creating..." : "Create Team"}
