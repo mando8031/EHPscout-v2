@@ -1,47 +1,63 @@
-const BASE = "https://www.thebluealliance.com/api/v3";
+const BASE_URL = "https://www.thebluealliance.com/api/v3";
 
+// Load API key from environment variables
+const API_KEY = process.env.REACT_APP_TBA_KEY;
+
+// Debug: confirm key loaded
+console.log("Loaded TBA API Key:", API_KEY ? "YES" : "NO");
+
+// Request headers
 const headers = {
-  "X-TBA-Auth-Key": process.env.REACT_APP_TBA_KEY
+  "X-TBA-Auth-Key": API_KEY || ""
 };
 
+// Safe fetch wrapper
 async function safeFetch(url) {
 
-  console.log("Fetching:", url);
+  console.log("Requesting:", url);
 
   try {
 
-    const res = await fetch(url, { headers });
+    const response = await fetch(url, { headers });
 
-    console.log("Status:", res.status);
+    console.log("Response status:", response.status);
 
-    if (!res.ok) {
-      console.error("TBA request failed:", res.status);
+    if (!response.ok) {
+      console.error("TBA request failed:", response.status);
       return [];
     }
 
-    const data = await res.json();
+    const data = await response.json();
 
-    console.log("TBA data received:", data.length);
+    if (!Array.isArray(data)) {
+      console.warn("Unexpected response format:", data);
+      return [];
+    }
+
+    console.log("Received items:", data.length);
 
     return data;
 
-  } catch (err) {
+  } catch (error) {
 
-    console.error("TBA fetch error:", err);
+    console.error("TBA fetch error:", error);
+
     return [];
 
   }
 
 }
 
+// Load all events for a year
 export async function getEvents(year) {
 
-  return safeFetch(`${BASE}/events/${year}/simple`);
+  return safeFetch(`${BASE_URL}/events/${year}/simple`);
 
 }
 
+// Load matches for an event
 export async function getMatches(eventKey) {
 
-  return safeFetch(`${BASE}/event/${eventKey}/matches`);
+  return safeFetch(`${BASE_URL}/event/${eventKey}/matches`);
 
 }
