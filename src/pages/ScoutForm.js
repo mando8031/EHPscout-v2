@@ -20,9 +20,12 @@ const [intake, setIntake] = useState("slow");
 const [submitting, setSubmitting] = useState(false);
 
 async function submitScout(e) {
-e.preventDefault();
 
 ```
+if (e && e.preventDefault) {
+  e.preventDefault();
+}
+
 if (!team) {
   alert("Enter team number");
   return;
@@ -32,7 +35,6 @@ setSubmitting(true);
 
 try {
 
-  // convert categorical values to numeric values
   const climbScore =
     climb === "high" ? 10 :
     climb === "mid" ? 6 :
@@ -44,7 +46,6 @@ try {
 
   const movementScore = Number(movement);
 
-  // calculate overall score
   const overall =
     Number(auton) * 2 +
     Number(accuracy) * 2 +
@@ -76,7 +77,7 @@ try {
 
 } catch (err) {
 
-  console.error(err);
+  console.error("Save error:", err);
   alert("Error saving scouting data");
 
 }
