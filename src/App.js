@@ -8,41 +8,44 @@ import { auth, db } from "./firebase";
 import Navbar from "./components/Navbar";
 
 import ScoutLogin from "./pages/ScoutLogin";
-import EventSelect from "./pages/EventSelect";
-import MatchList from "./pages/MatchList";
-import ScoutForm from "./pages/ScoutForm";
-import RobotSelect from "./pages/RobotSelect";
-import Dashboard from "./pages/Dashboard";
-import Picklist from "./pages/Picklist";
-
 import TeamSetup from "./pages/TeamSetup";
 import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
-import AccountSettings from "./pages/AccountSettings";
 
-import AdminPanel from "./pages/AdminPanel";
-import ScoutHome from "./pages/ScoutHome";
+import EventSelect from "./pages/EventSelect";
+import MatchList from "./pages/MatchList";
+import ScoutForm from "./pages/ScoutForm";
+
+import Dashboard from "./pages/Dashboard";
+import RobotSelect from "./pages/RobotSelect";
+import Picklist from "./pages/Picklist";
+
+import AdminPage from "./pages/AdminPage";
+import AccountSettings from "./pages/AccountSettings";
 
 function App() {
 
-const [user, setUser] = useState(null);
-const [role, setRole] = useState(null);
-const [loading, setLoading] = useState(true);
+const [user,setUser] = useState(null);
+const [role,setRole] = useState(null);
+const [teamId,setTeamId] = useState(null);
+const [loading,setLoading] = useState(true);
 
-useEffect(() => {
+useEffect(()=>{
 
 
-const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+const unsubscribe = onAuthStateChanged(auth, async (currentUser)=>{
 
   setUser(currentUser);
 
-  if (currentUser) {
+  if(currentUser){
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const snap = await getDoc(userRef);
+    const ref = doc(db,"users",currentUser.uid);
+    const snap = await getDoc(ref);
 
-    if (snap.exists()) {
-      setRole(snap.data().role);
+    if(snap.exists()){
+      const data = snap.data();
+      setRole(data.role);
+      setTeamId(data.teamId);
     }
 
   }
@@ -51,12 +54,12 @@ const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 
 });
 
-return () => unsubscribe();
+return ()=>unsubscribe();
 
 
-}, []);
+},[]);
 
-if (loading) {
+if(loading){
 return <div>Loading...</div>;
 }
 
@@ -65,74 +68,69 @@ return (
 
 <BrowserRouter>
 
-  <div style={{ minHeight: "100vh", background: "#111", color: "white" }}>
+  <div style={{minHeight:"100vh",background:"#111",color:"white"}}>
 
-    <Navbar role={role} />
+    {user && <Navbar role={role}/>}
 
-    <div style={{ padding: "20px" }}>
+    <div style={{padding:"20px"}}>
 
       <Routes>
 
-        <Route path="/login" element={<ScoutLogin />} />
+        <Route path="/login" element={<ScoutLogin/>}/>
 
         <Route
           path="/team"
-          element={user ? <TeamSetup /> : <Navigate to="/login" />}
+          element={user ? <TeamSetup/> : <Navigate to="/login"/>}
         />
 
         <Route
           path="/create-team"
-          element={user && role === "admin" ? <CreateTeam /> : <Navigate to="/" />}
+          element={user ? <CreateTeam/> : <Navigate to="/login"/>}
         />
 
         <Route
           path="/join/:code"
-          element={user ? <JoinTeam /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/admin"
-          element={user && role === "admin" ? <AdminPanel /> : <Navigate to="/" />}
-        />
-
-        <Route
-          path="/scout-home"
-          element={user ? <ScoutHome /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/"
-          element={user ? <EventSelect /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/matches/:eventKey"
-          element={user ? <MatchList /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/scout/:eventKey/:matchNumber"
-          element={user ? <ScoutForm /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/robots"
-          element={user ? <RobotSelect /> : <Navigate to="/login" />}
+          element={user ? <JoinTeam/> : <Navigate to="/login"/>}
         />
 
         <Route
           path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/login" />}
+          element={user && teamId ? <Dashboard/> : <Navigate to="/team"/>}
+        />
+
+        <Route
+          path="/admin"
+          element={user && role==="admin" ? <AdminPage/> : <Navigate to="/dashboard"/>}
+        />
+
+        <Route
+          path="/robots"
+          element={user && teamId ? <RobotSelect/> : <Navigate to="/team"/>}
         />
 
         <Route
           path="/picklist"
-          element={user ? <Picklist /> : <Navigate to="/login" />}
+          element={user && teamId ? <Picklist/> : <Navigate to="/team"/>}
+        />
+
+        <Route
+          path="/"
+          element={user && teamId ? <EventSelect/> : <Navigate to="/team"/>}
+        />
+
+        <Route
+          path="/matches/:eventKey"
+          element={user && teamId ? <MatchList/> : <Navigate to="/team"/>}
+        />
+
+        <Route
+          path="/scout/:eventKey/:matchNumber"
+          element={user && teamId ? <ScoutForm/> : <Navigate to="/team"/>}
         />
 
         <Route
           path="/account"
-          element={user ? <AccountSettings /> : <Navigate to="/login" />}
+          element={user ? <AccountSettings/> : <Navigate to="/login"/>}
         />
 
       </Routes>
