@@ -53,16 +53,12 @@ try {
   const payload = {
     team: Number(team),
     matchNumber: Number(matchNumber),
-
     auton: Number(auton),
     accuracy: Number(accuracy),
     movement: movementScore,
-
     climb,
     intake,
-
     overall,
-
     created: serverTimestamp()
   };
 
@@ -74,7 +70,7 @@ try {
 
 } catch (err) {
 
-  console.error(err);
+  console.error("Error saving scouting data:", err);
   alert("Error saving scouting data");
 
 }
