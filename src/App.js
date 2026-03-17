@@ -12,7 +12,6 @@ import TeamSetup from "./pages/TeamSetup";
 import JoinTeam from "./pages/JoinTeam";
 
 import Dashboard from "./pages/Dashboard";
-import EventSelect from "./pages/EventSelect";
 import MatchList from "./pages/MatchList";
 import ScoutForm from "./pages/ScoutForm";
 
@@ -41,23 +40,14 @@ const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
 
   setUser(currentUser);
 
-  try {
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const snap = await getDoc(userRef);
+  if (snap.exists()) {
 
-    if (snap.exists()) {
+    const data = snap.data();
 
-      const data = snap.data();
-
-      setRole(data.role || "scout");
-      setTeamId(data.teamId || null);
-
-    }
-
-  } catch (err) {
-
-    console.error("Error loading user:", err);
+    setRole(data.role || "scout");
+    setTeamId(data.teamId || null);
 
   }
 
@@ -70,9 +60,7 @@ return () => unsubscribe();
 
 }, []);
 
-if (loading) {
-return <div>Loading...</div>;
-}
+if (loading) return <div>Loading...</div>;
 
 return (
 
@@ -81,14 +69,12 @@ return (
 
   <div style={{ minHeight: "100vh", background: "#111", color: "white" }}>
 
-    {/* Navbar only after user is in a team */}
     {user && teamId && <Navbar role={role} />}
 
     <div style={{ padding: "20px" }}>
 
       <Routes>
 
-        {/* ROOT */}
         <Route
           path="/"
           element={
@@ -100,10 +86,8 @@ return (
           }
         />
 
-        {/* LOGIN */}
         <Route path="/login" element={<ScoutLogin />} />
 
-        {/* TEAM SETUP */}
         <Route
           path="/team"
           element={
@@ -115,93 +99,21 @@ return (
           }
         />
 
-        <Route
-          path="/join-team"
-          element={
-            !user
-              ? <Navigate to="/login" />
-              : <JoinTeam />
-          }
-        />
+        <Route path="/join-team" element={<JoinTeam />} />
 
-        {/* DASHBOARD */}
-        <Route
-          path="/dashboard"
-          element={
-            !user
-              ? <Navigate to="/login" />
-              : !teamId
-              ? <Navigate to="/team" />
-              : <Dashboard />
-          }
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* ADMIN */}
-        <Route
-          path="/admin"
-          element={
-            user && role === "admin"
-              ? <AdminPage />
-              : <Navigate to="/dashboard" />
-          }
-        />
+        <Route path="/matches" element={<MatchList />} />
 
-        {/* SCOUTING */}
-        <Route
-          path="/events"
-          element={
-            user && teamId
-              ? <EventSelect />
-              : <Navigate to="/team" />
-          }
-        />
+        <Route path="/scout/:matchNumber" element={<ScoutForm />} />
 
-        <Route
-          path="/matches/:eventKey"
-          element={
-            user && teamId
-              ? <MatchList />
-              : <Navigate to="/team" />
-          }
-        />
+        <Route path="/robots" element={<RobotSelect />} />
 
-        <Route
-          path="/scout/:eventKey/:matchNumber"
-          element={
-            user && teamId
-              ? <ScoutForm />
-              : <Navigate to="/team" />
-          }
-        />
+        <Route path="/picklist" element={<Picklist />} />
 
-        {/* DATA */}
-        <Route
-          path="/robots"
-          element={
-            user && teamId
-              ? <RobotSelect />
-              : <Navigate to="/team" />
-          }
-        />
+        <Route path="/admin" element={<AdminPage />} />
 
-        <Route
-          path="/picklist"
-          element={
-            user && teamId
-              ? <Picklist />
-              : <Navigate to="/team" />
-          }
-        />
-
-        {/* ACCOUNT */}
-        <Route
-          path="/account"
-          element={
-            user
-              ? <AccountSettings />
-              : <Navigate to="/login" />
-          }
-        />
+        <Route path="/account" element={<AccountSettings />} />
 
       </Routes>
 
