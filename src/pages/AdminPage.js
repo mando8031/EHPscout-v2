@@ -60,20 +60,21 @@ loadData();
 
 async function saveEvent(e) {
 
+  e.preventDefault();
 
-e.preventDefault();
+  if (!teamId || !selectedEvent) {
+    alert("Select an event");
+    return;
+  }
 
-if (!teamId || !selectedEvent) {
-  alert("Select an event");
-  return;
-}
+  const selected = events.find(e => e.key === selectedEvent);
 
-await updateDoc(doc(db, "teams", teamId), {
-  eventKey: selectedEvent
-});
+  await updateDoc(doc(db, "teams", teamId), {
+    eventKey: selectedEvent,
+    eventName: selected ? selected.name : ""
+  });
 
-alert("Event saved for team");
-
+  alert("Event saved for team");
 
 }
 
