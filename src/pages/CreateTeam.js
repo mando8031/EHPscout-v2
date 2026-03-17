@@ -29,15 +29,15 @@ async function createTeam(e) {
 
 e.preventDefault();
 
-if (!teamName.trim()) {
-  alert("Enter a team name");
-  return;
-}
-
 const user = auth.currentUser;
 
 if (!user) {
   alert("Not logged in");
+  return;
+}
+
+if (!teamName.trim()) {
+  alert("Enter a team name");
   return;
 }
 
@@ -51,9 +51,9 @@ try {
     where("name", "==", teamName.trim())
   );
 
-  const existingTeams = await getDocs(teamQuery);
+  const existing = await getDocs(teamQuery);
 
-  if (!existingTeams.empty) {
+  if (!existing.empty) {
     alert("A team with this name already exists.");
     setCreating(false);
     return;
@@ -73,7 +73,6 @@ try {
 
   const teamId = teamRef.id;
 
-  // Update the user document
   await updateDoc(
     doc(db, "users", user.uid),
     {
@@ -82,8 +81,8 @@ try {
     }
   );
 
-  // Force reload so App.js reads the updated teamId
-  window.location.href = "/dashboard";
+  // Immediately go to dashboard
+  navigate("/dashboard");
 
 } catch (err) {
 
@@ -109,7 +108,7 @@ return (
     <input
       placeholder="Team Name"
       value={teamName}
-      onChange={(e) => setTeamName(e.target.value)}
+      onChange={(e)=>setTeamName(e.target.value)}
       style={{
         width: "100%",
         padding: "10px",
@@ -118,6 +117,7 @@ return (
     />
 
     <button
+      type="submit"
       style={{
         width: "100%",
         padding: "12px"
