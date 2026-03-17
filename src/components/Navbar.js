@@ -1,60 +1,31 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import { Link } from "react-router-dom";
 
-const Navbar = ({role}) => {
-
-const navigate = useNavigate();
-
-async function logout(){
-await signOut(auth);
-navigate("/login");
-}
+const Navbar = ({ role }) => {
 
 return (
 
 
-<div
-  style={{
-    background:"#222",
-    padding:"15px",
-    display:"flex",
-    gap:"20px",
-    alignItems:"center"
-  }}
->
+<div style={{
+  display: "flex",
+  gap: "15px",
+  padding: "15px",
+  borderBottom: "1px solid #333"
+}}>
 
-  <Link to="/dashboard" style={{color:"white"}}>Dashboard</Link>
+  <Link to="/dashboard">Dashboard</Link>
 
-  <Link to="/" style={{color:"white"}}>Events</Link>
+  <Link to="/matches">Matches</Link>
 
-  <Link to="/robots" style={{color:"white"}}>Robots</Link>
+  <Link to="/robots">Robots</Link>
 
-  <Link to="/picklist" style={{color:"white"}}>Picklist</Link>
+  <Link to="/picklist">Picklist</Link>
 
-  {role==="admin" && (
-    <Link to="/admin" style={{color:"#f39c12"}}>
-      Admin
-    </Link>
+  {role === "admin" && (
+    <Link to="/admin">Admin</Link>
   )}
 
-  <Link to="/account" style={{color:"white"}}>Account</Link>
-
-  <button
-    onClick={logout}
-    style={{
-      marginLeft:"auto",
-      background:"#e74c3c",
-      color:"white",
-      border:"none",
-      padding:"8px 14px",
-      borderRadius:"5px",
-      cursor:"pointer"
-    }}
-  >
-    Logout
-  </button>
+  <Link to="/account">Account</Link>
 
 </div>
 
