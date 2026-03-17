@@ -103,7 +103,14 @@ return (
 
         <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route path="/matches" element={<MatchList />} />
+        <Route
+          path="/matches"
+          element={
+            user && teamId
+             ? <MatchList />
+             : <Navigate to="/team" />
+  }
+/>
 
         <Route path="/scout/:matchNumber" element={<ScoutForm />} />
 
