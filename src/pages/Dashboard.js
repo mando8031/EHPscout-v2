@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
 
-const [eventName, setEventName] = useState("");
+const [eventName, setEventName] = useState("Loading...");
+const navigate = useNavigate();
 
 useEffect(() => {
 
@@ -14,23 +16,51 @@ async function loadTeam() {
   try {
 
     const user = auth.currentUser;
-    if (!user) return;
 
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    //  get user doc
     const userSnap = await getDoc(doc(db, "users", user.uid));
-    if (!userSnap.exists()) return;
 
-    const teamId = userSnap.data().teamId;
+    if (!userSnap.exists()) {
+      navigate("/team");
+      return;
+    }
 
+    const userData = userSnap.data();
+    const teamId = userData.teamId;
+
+    //  no team → go back
+    if (!teamId) {
+      navigate("/team");
+      return;
+    }
+
+    //  get team doc
     const teamSnap = await getDoc(doc(db, "teams", teamId));
-    if (!teamSnap.exists()) return;
+
+    //  team missing → FIX BROKEN STATE
+    if (!teamSnap.exists()) {
+      console.error("Team does not exist");
+      navigate("/team");
+      return;
+    }
 
     const teamData = teamSnap.data();
 
-    setEventName(teamData.eventName || "No event selected");
+    setEventName(
+      teamData.eventName && teamData.eventName !== ""
+        ? teamData.eventName
+        : "No event selected"
+    );
 
   } catch (err) {
 
     console.error("Dashboard error:", err);
+    setEventName("Error loading event");
 
   }
 
@@ -39,10 +69,9 @@ async function loadTeam() {
 loadTeam();
 
 
-}, []);
+}, [navigate]);
 
 return (
-
 
 <div>
 
@@ -62,6 +91,7 @@ return (
   <p>Welcome to your scouting dashboard.</p>
 
 </div>
+
 
 );
 
