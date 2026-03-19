@@ -10,6 +10,7 @@ const [matches, setMatches] = useState([]);
 
 useEffect(() => {
 
+
 async function loadMatches() {
 
   try {
@@ -28,11 +29,11 @@ async function loadMatches() {
     const eventKey = teamSnap.data().eventKey;
 
     if (!eventKey) {
-      alert("Admin has not selected an event yet.");
+      alert("No event selected by admin");
       return;
     }
 
-    const response = await fetch(
+    const res = await fetch(
       "https://www.thebluealliance.com/api/v3/event/" +
       eventKey +
       "/matches/simple",
@@ -43,13 +44,16 @@ async function loadMatches() {
       }
     );
 
-    const data = await response.json();
+    const data = await res.json();
 
-    const qmMatches = data.filter(function(match) {
-      return match.comp_level === "qm";
-    });
+    if (!Array.isArray(data)) {
+      console.error("Bad API response:", data);
+      return;
+    }
 
-    setMatches(qmMatches);
+    const qm = data.filter(m => m.comp_level === "qm");
+
+    setMatches(qm);
 
   } catch (err) {
 
@@ -71,7 +75,11 @@ return (
 
   <h1>Matches</h1>
 
-  {matches.map((match) => (
+  {matches.length === 0 && (
+    <p>No matches loaded</p>
+  )}
+
+  {matches.map(match => (
 
     <div
       key={match.key}
