@@ -1,32 +1,34 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
-import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import {
+collection,
+addDoc,
+query,
+where,
+getDocs,
+updateDoc,
+doc
+} from "firebase/firestore";
+
+const TeamSetup = () => {
+
+const navigate = useNavigate();
+
+const [teamName, setTeamName] = useState("");
+const [joinCode, setJoinCode] = useState("");
+const [loading, setLoading] = useState(false);
 
 function generateCode() {
 return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-const TeamSetup = () => {
+//  CREATE TEAM
+async function createTeam() {
 
-const navigate = useNavigate();
-const [teamName, setTeamName] = useState("");
-const [loading, setLoading] = useState(false);
-
-async function createTeam(e) {
-
-
-e.preventDefault();
 
 if (!teamName.trim()) {
-  alert("Please enter a team name");
-  return;
-}
-
-const user = auth.currentUser;
-
-if (!user) {
-  alert("User not logged in");
+  alert("Enter a team name");
   return;
 }
 
@@ -34,22 +36,43 @@ setLoading(true);
 
 try {
 
-      const teamRef = await addDoc(collection(db, "teams"), {
-        name: teamName.trim(),
-        joinCode: generateCode(),
-        createdBy: user.uid,
-        adminUid: user.uid,   
-        createdAt: new Date()
-});
+  const user = auth.currentUser;
+  if (!user) return;
+
+  //  Prevent duplicate team names
+  const q = query(
+    collection(db, "teams"),
+    where("name", "==", teamName.trim())
+  );
+
+  const existing = await getDocs(q);
+
+  if (!existing.empty) {
+    alert("Team name already exists");
+    setLoading(false);
+    return;
+  }
+
+  const code = generateCode();
+
+  //  CREATE TEAM WITH adminUid (CRITICAL FIX)
+  const teamRef = await addDoc(collection(db, "teams"), {
+    name: teamName.trim(),
+    joinCode: code,
+    adminUid: user.uid,
+    createdAt: new Date(),
+    eventKey: "",
+    eventName: ""
   });
 
+  //  LINK USER TO TEAM AS ADMIN
   await updateDoc(doc(db, "users", user.uid), {
-    role: "admin",
-    teamId: teamRef.id
+    teamId: teamRef.id,
+    role: "admin"
   });
 
-  // hard redirect guarantees dashboard loads
-  window.location.href = "/dashboard";
+  // 🚀 GO TO DASHBOARD IMMEDIATELY
+  navigate("/dashboard");
 
 } catch (err) {
 
@@ -63,8 +86,56 @@ setLoading(false);
 
 }
 
-function goJoin() {
-navigate("/join-team");
+//  JOIN TEAM
+async function joinTeam() {
+
+
+if (!joinCode.trim()) {
+  alert("Enter a join code");
+  return;
+}
+
+setLoading(true);
+
+try {
+
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const q = query(
+    collection(db, "teams"),
+    where("joinCode", "==", joinCode.trim().toUpperCase())
+  );
+
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    alert("Team not found");
+    setLoading(false);
+    return;
+  }
+
+  const teamDoc = snap.docs[0];
+
+  //  LINK USER AS SCOUT
+  await updateDoc(doc(db, "users", user.uid), {
+    teamId: teamDoc.id,
+    role: "scout"
+  });
+
+  // 🚀 GO TO DASHBOARD
+  navigate("/dashboard");
+
+} catch (err) {
+
+  console.error("Join team error:", err);
+  alert("Failed to join team");
+
+}
+
+setLoading(false);
+
+
 }
 
 return (
@@ -72,9 +143,16 @@ return (
 
 <div style={{ maxWidth: "500px", margin: "auto" }}>
 
-  <h1>Create Team</h1>
+  <h1>Team Setup</h1>
 
-  <form onSubmit={createTeam}>
+  {/* CREATE TEAM */}
+  <div style={{
+    border: "1px solid #444",
+    padding: "20px",
+    marginBottom: "20px"
+  }}>
+
+    <h2>Create Team</h2>
 
     <input
       placeholder="Team Name"
@@ -83,36 +161,48 @@ return (
       style={{
         width: "100%",
         padding: "10px",
-        marginBottom: "15px"
+        marginBottom: "10px"
       }}
     />
 
     <button
-      type="submit"
+      onClick={createTeam}
       disabled={loading}
-      style={{
-        width: "100%",
-        padding: "12px"
-      }}
+      style={{ width: "100%", padding: "12px" }}
     >
-      {loading ? "Creating..." : "Create Team"}
+      Create Team
     </button>
 
-  </form>
+  </div>
 
-  <hr style={{ margin: "40px 0" }} />
+  {/* JOIN TEAM */}
+  <div style={{
+    border: "1px solid #444",
+    padding: "20px"
+  }}>
 
-  <h2>Join Team</h2>
+    <h2>Join Team</h2>
 
-  <button
-    onClick={goJoin}
-    style={{
-      width: "100%",
-      padding: "12px"
-    }}
-  >
-    Join Existing Team
-  </button>
+    <input
+      placeholder="Enter Join Code"
+      value={joinCode}
+      onChange={(e)=>setJoinCode(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "10px",
+        marginBottom: "10px"
+      }}
+    />
+
+    <button
+      onClick={joinTeam}
+      disabled={loading}
+      style={{ width: "100%", padding: "12px" }}
+    >
+      Join Team
+    </button>
+
+  </div>
 
 </div>
 
