@@ -23,8 +23,9 @@ function generateCode() {
 return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-//  CREATE TEAM
-async function createTeam() {
+//  CREATE TEAM (FORM SUBMIT)
+async function handleCreate(e) {
+e.preventDefault();
 
 
 if (!teamName.trim()) {
@@ -37,9 +38,12 @@ setLoading(true);
 try {
 
   const user = auth.currentUser;
-  if (!user) return;
+  if (!user) {
+    alert("Not logged in");
+    return;
+  }
 
-  //  Prevent duplicate team names
+  // prevent duplicate names
   const q = query(
     collection(db, "teams"),
     where("name", "==", teamName.trim())
@@ -48,35 +52,33 @@ try {
   const existing = await getDocs(q);
 
   if (!existing.empty) {
-    alert("Team name already exists");
+    alert("Team already exists");
     setLoading(false);
     return;
   }
 
   const code = generateCode();
 
-  //  CREATE TEAM WITH adminUid (CRITICAL FIX)
   const teamRef = await addDoc(collection(db, "teams"), {
     name: teamName.trim(),
     joinCode: code,
-    adminUid: user.uid,
+    adminUid: user.uid, //  CRITICAL FIX
     createdAt: new Date(),
     eventKey: "",
     eventName: ""
   });
 
-  //  LINK USER TO TEAM AS ADMIN
   await updateDoc(doc(db, "users", user.uid), {
     teamId: teamRef.id,
     role: "admin"
   });
 
-  // 🚀 GO TO DASHBOARD IMMEDIATELY
-  navigate("/dashboard");
+  // force redirect (more reliable than navigate sometimes)
+  window.location.href = "/dashboard";
 
 } catch (err) {
 
-  console.error("Create team error:", err);
+  console.error("CREATE ERROR:", err);
   alert("Failed to create team");
 
 }
@@ -87,7 +89,8 @@ setLoading(false);
 }
 
 //  JOIN TEAM
-async function joinTeam() {
+async function handleJoin(e) {
+e.preventDefault();
 
 
 if (!joinCode.trim()) {
@@ -117,18 +120,16 @@ try {
 
   const teamDoc = snap.docs[0];
 
-  //  LINK USER AS SCOUT
   await updateDoc(doc(db, "users", user.uid), {
     teamId: teamDoc.id,
     role: "scout"
   });
 
-  // 🚀 GO TO DASHBOARD
-  navigate("/dashboard");
+  window.location.href = "/dashboard";
 
 } catch (err) {
 
-  console.error("Join team error:", err);
+  console.error("JOIN ERROR:", err);
   alert("Failed to join team");
 
 }
@@ -154,24 +155,28 @@ return (
 
     <h2>Create Team</h2>
 
-    <input
-      placeholder="Team Name"
-      value={teamName}
-      onChange={(e)=>setTeamName(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "10px"
-      }}
-    />
+    <form onSubmit={handleCreate}>
 
-    <button
-      onClick={createTeam}
-      disabled={loading}
-      style={{ width: "100%", padding: "12px" }}
-    >
-      Create Team
-    </button>
+      <input
+        placeholder="Team Name"
+        value={teamName}
+        onChange={(e)=>setTeamName(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "10px"
+        }}
+      />
+
+      <button
+        type="submit"
+        disabled={loading}
+        style={{ width: "100%", padding: "12px" }}
+      >
+        {loading ? "Creating..." : "Create Team"}
+      </button>
+
+    </form>
 
   </div>
 
@@ -183,24 +188,28 @@ return (
 
     <h2>Join Team</h2>
 
-    <input
-      placeholder="Enter Join Code"
-      value={joinCode}
-      onChange={(e)=>setJoinCode(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "10px"
-      }}
-    />
+    <form onSubmit={handleJoin}>
 
-    <button
-      onClick={joinTeam}
-      disabled={loading}
-      style={{ width: "100%", padding: "12px" }}
-    >
-      Join Team
-    </button>
+      <input
+        placeholder="Enter Join Code"
+        value={joinCode}
+        onChange={(e)=>setJoinCode(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "10px"
+        }}
+      />
+
+      <button
+        type="submit"
+        disabled={loading}
+        style={{ width: "100%", padding: "12px" }}
+      >
+        {loading ? "Joining..." : "Join Team"}
+      </button>
+
+    </form>
 
   </div>
 
