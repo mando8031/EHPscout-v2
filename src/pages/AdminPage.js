@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+doc,
+getDoc,
+updateDoc,
+collection,
+query,
+where,
+getDocs
+} from "firebase/firestore";
 
 const AdminPage = () => {
 
-const [teamId, setTeamId] = useState(null);
+const [teamId, setTeamId] = useState("");
 const [joinCode, setJoinCode] = useState("");
 const [events, setEvents] = useState([]);
 const [selectedEvent, setSelectedEvent] = useState("");
+const [members, setMembers] = useState([]);
 
 useEffect(() => {
 
@@ -20,32 +29,36 @@ async function loadData() {
     if (!user) return;
 
     const userSnap = await getDoc(doc(db, "users", user.uid));
+    if (!userSnap.exists()) return;
 
-    if (!userSnap.exists()) {
-      console.log("No user doc");
-      return;
-    }
+    const userData = userSnap.data();
+    setTeamId(userData.teamId);
 
-    const data = userSnap.data();
-
-    console.log("USER DATA:", data);
-
-    setTeamId(data.teamId);
-
-    const teamSnap = await getDoc(doc(db, "teams", data.teamId));
+    // team data
+    const teamSnap = await getDoc(doc(db, "teams", userData.teamId));
 
     if (teamSnap.exists()) {
-
       const teamData = teamSnap.data();
-
-      console.log("TEAM DATA:", teamData);
-
       setJoinCode(teamData.joinCode || "");
       setSelectedEvent(teamData.eventKey || "");
-
     }
 
-    // Load events
+    // load members
+    const q = query(
+      collection(db, "users"),
+      where("teamId", "==", userData.teamId)
+    );
+
+    const snap = await getDocs(q);
+
+    const list = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    setMembers(list);
+
+    // load events
     const res = await fetch(
       "https://www.thebluealliance.com/api/v3/events/2026",
       {
@@ -59,7 +72,7 @@ async function loadData() {
     setEvents(eventData);
 
   } catch (err) {
-    console.error("LOAD ERROR:", err);
+    console.error("Admin load error:", err);
   }
 
 }
@@ -71,18 +84,10 @@ loadData();
 
 async function saveEvent(e) {
 
+
 e.preventDefault();
 
-console.log("Saving event...");
-console.log("teamId:", teamId);
-console.log("selectedEvent:", selectedEvent);
-
-if (!teamId) {
-  alert("No team found");
-  return;
-}
-
-if (!selectedEvent) {
+if (!teamId || !selectedEvent) {
   alert("Select an event");
   return;
 }
@@ -96,15 +101,63 @@ try {
     eventName: selected ? selected.name : ""
   });
 
-  console.log("EVENT SAVED");
-
-  alert("Event saved successfully");
+  alert("Event saved");
 
 } catch (err) {
-
-  console.error("SAVE ERROR:", err);
+  console.error("Save error:", err);
   alert("Failed to save event");
+}
 
+
+}
+
+//  REMOVE MEMBER
+async function removeMember(memberId) {
+
+
+if (!window.confirm("Remove this user from team?")) return;
+
+try {
+
+  await updateDoc(doc(db, "users", memberId), {
+    teamId: null,
+    role: "scout"
+  });
+
+  setMembers(prev => prev.filter(m => m.id !== memberId));
+
+} catch (err) {
+  console.error("Remove error:", err);
+}
+
+
+}
+
+//  TRANSFER ADMIN
+async function makeAdmin(memberId) {
+
+
+if (!window.confirm("Transfer admin role?")) return;
+
+try {
+
+  await updateDoc(doc(db, "teams", teamId), {
+    adminUid: memberId
+  });
+
+  await updateDoc(doc(db, "users", memberId), {
+    role: "admin"
+  });
+
+  await updateDoc(doc(db, "users", auth.currentUser.uid), {
+    role: "scout"
+  });
+
+  alert("Admin transferred");
+  window.location.reload();
+
+} catch (err) {
+  console.error("Transfer error:", err);
 }
 
 
@@ -112,7 +165,8 @@ try {
 
 return (
 
-<div style={{ maxWidth: "600px", margin: "auto" }}>
+
+<div style={{ maxWidth: "700px", margin: "auto" }}>
 
   <h1>Admin Panel</h1>
 
@@ -120,10 +174,10 @@ return (
   <div style={{
     border: "1px solid #444",
     padding: "20px",
-    marginBottom: "30px"
+    marginBottom: "20px"
   }}>
     <h2>Join Code</h2>
-    <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+    <div style={{ fontSize: "24px" }}>
       {joinCode}
     </div>
   </div>
@@ -131,7 +185,8 @@ return (
   {/* EVENT SELECT */}
   <div style={{
     border: "1px solid #444",
-    padding: "20px"
+    padding: "20px",
+    marginBottom: "20px"
   }}>
 
     <h2>Select Event</h2>
@@ -144,13 +199,13 @@ return (
         style={{
           width: "100%",
           padding: "10px",
-          marginBottom: "15px"
+          marginBottom: "10px"
         }}
       >
 
         <option value="">-- Select Event --</option>
 
-        {events.map((event) => (
+        {events.map(event => (
           <option key={event.key} value={event.key}>
             {event.name}
           </option>
@@ -158,10 +213,7 @@ return (
 
       </select>
 
-      <button type="submit" style={{
-        width: "100%",
-        padding: "12px"
-      }}>
+      <button style={{ width: "100%", padding: "12px" }}>
         Save Event
       </button>
 
@@ -169,7 +221,53 @@ return (
 
   </div>
 
+  {/* TEAM MEMBERS */}
+  <div style={{
+    border: "1px solid #444",
+    padding: "20px"
+  }}>
+
+    <h2>Team Members</h2>
+
+    {members.map(member => (
+
+      <div key={member.id} style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "10px"
+      }}>
+
+        <span>
+          {member.email || member.id} ({member.role || "scout"})
+        </span>
+
+        {member.id !== auth.currentUser.uid && (
+          <div>
+
+            <button
+              onClick={()=>makeAdmin(member.id)}
+              style={{ marginRight: "5px" }}
+            >
+              Make Admin
+            </button>
+
+            <button
+              onClick={()=>removeMember(member.id)}
+            >
+              Remove
+            </button>
+
+          </div>
+        )}
+
+      </div>
+
+    ))}
+
+  </div>
+
 </div>
+
 
 );
 
