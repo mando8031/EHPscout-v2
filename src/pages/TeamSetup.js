@@ -34,11 +34,13 @@ setLoading(true);
 
 try {
 
-  const teamRef = await addDoc(collection(db, "teams"), {
-    name: teamName.trim(),
-    joinCode: generateCode(),
-    createdBy: user.uid,
-    createdAt: new Date()
+      const teamRef = await addDoc(collection(db, "teams"), {
+        name: teamName.trim(),
+        joinCode: generateCode(),
+        createdBy: user.uid,
+        adminUid: user.uid,   
+        createdAt: new Date()
+});
   });
 
   await updateDoc(doc(db, "users", user.uid), {
