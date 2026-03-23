@@ -1,37 +1,58 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { getCurrentUser, logoutUser } from "../utils/localAuth";
 import { Link } from "react-router-dom";
 
-const Navbar = ({ role }) => {
+const Navbar = () => {
 
-return (
+  const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const current = getCurrentUser();
+    setUser(current);
+  }, []);
 
-<div style={{
-  display: "flex",
-  gap: "15px",
-  padding: "15px",
-  borderBottom: "1px solid #333"
-}}>
+  const handleLogout = () => {
+    logoutUser();
+    setUser(null);
+    window.location.reload();
+  };
 
-  <Link to="/dashboard">Dashboard</Link>
+  return (
+    <div
+      style={{
+        padding: "10px",
+        background: "#222",
+        color: "white",
+        display: "flex",
+        justifyContent: "space-between"
+      }}
+    >
 
-  <Link to="/matches">Matches</Link>
+      <div style={{ display: "flex", gap: "15px" }}>
+        <Link to="/" style={{ color: "white" }}>Events</Link>
+        <Link to="/dashboard" style={{ color: "white" }}>Dashboard</Link>
+        <Link to="/picklist" style={{ color: "white" }}>Picklist</Link>
+      </div>
 
-  <Link to="/robots">Robots</Link>
+      <div>
+        {user ? (
+          <>
+            <span style={{ marginRight: "10px" }}>
+              {user.username}
+            </span>
+            <button onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <Link to="/login" style={{ color: "white" }}>
+            Login
+          </Link>
+        )}
+      </div>
 
-  <Link to="/picklist">Picklist</Link>
-
-  {role === "admin" && (
-    <Link to="/admin">Admin</Link>
-  )}
-
-  <Link to="/account">Account</Link>
-
-</div>
-
-
-);
-
+    </div>
+  );
 };
 
 export default Navbar;
