@@ -16,7 +16,7 @@ function App() {
   const teams = getTeams();
 
   const userHasTeam =
-    user && teams.some(t => t.members.includes(user.username));
+    user && teams.some(t => t.members?.includes(user.username));
 
   return (
     <Router>
@@ -27,52 +27,67 @@ function App() {
         justifyContent: "space-around",
         padding: "10px",
         background: "#111",
-        color: "white",
-        position: "sticky",
-        top: 0,
-        zIndex: 1000
+        color: "white"
       }}>
         <Link style={{ color: "white" }} to="/">Home</Link>
 
-        {user && userHasTeam && (
+        {user && (
           <>
-            <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
+            <Link style={{ color: "white" }} to="/create-team">Team</Link>
             <Link style={{ color: "white" }} to="/event-select">Events</Link>
-
-            {/* ✅ NEW SCOUT FORM LINK */}
             <Link style={{ color: "white" }} to="/scout">Scout</Link>
+            <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
           </>
         )}
       </nav>
 
-      {/* ROUTES */}
       <Routes>
 
+        {/* HOME */}
         <Route
           path="/"
           element={
-            user
-              ? userHasTeam
-                ? <Navigate to="/dashboard" />
-                : <Navigate to="/create-team" />
-              : <ScoutLogin />
+            user ? <Navigate to="/dashboard" /> : <ScoutLogin />
           }
         />
 
-        <Route path="/create-team" element={<CreateTeam />} />
-        <Route path="/event-select" element={<EventSelect />} />
+        {/* LOGIN */}
+        <Route path="/login" element={<ScoutLogin />} />
 
-        {/* ✅ NEW ROUTE */}
-        <Route path="/scout" element={<ScoutForm />} />
+        {/* TEAM */}
+        <Route
+          path="/create-team"
+          element={
+            user ? <CreateTeam /> : <Navigate to="/login" />
+          }
+        />
 
+        {/* EVENTS */}
+        <Route
+          path="/event-select"
+          element={
+            user ? <EventSelect /> : <Navigate to="/login" />
+          }
+        />
+
+        {/* SCOUT */}
+        <Route
+          path="/scout"
+          element={
+            user ? <ScoutForm /> : <Navigate to="/login" />
+          }
+        />
+
+        {/* DASHBOARD */}
         <Route
           path="/dashboard"
           element={
-            user && userHasTeam
-              ? <Dashboard />
-              : <Navigate to="/" />
+            user ? <Dashboard /> : <Navigate to="/login" />
           }
         />
+
+        {/* FALLBACK (prevents white screen) */}
+        <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
 
