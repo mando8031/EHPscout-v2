@@ -1,17 +1,26 @@
 import React, { useState } from "react";
 import { createTeam } from "../utils/localTeams";
+import { getCurrentUser } from "../utils/localAuth";
+import { useNavigate } from "react-router-dom";
 
 const CreateTeam = () => {
 
   const [name, setName] = useState("");
+  const navigate = useNavigate();
 
   const handleCreate = () => {
-    const team = createTeam(name);
-    alert("Team created: " + team.name);
+
+    const user = getCurrentUser();
+
+    const team = createTeam(name, user.username);
+
+    alert(`Team created! Join Code: ${team.code}`);
+
+    navigate("/dashboard");
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div>
       <h1>Create Team</h1>
 
       <input
