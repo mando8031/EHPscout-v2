@@ -1,108 +1,40 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { auth, db } from "../firebase";
-import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { joinTeam } from "../utils/localTeams";
+import { getCurrentUser } from "../utils/localAuth";
 
 const JoinTeam = () => {
 
-const navigate = useNavigate();
-const [code, setCode] = useState("");
-const [loading, setLoading] = useState(false);
+  const [teamId, setTeamId] = useState("");
 
-async function joinTeam(e) {
+  const handleJoin = () => {
 
+    const user = getCurrentUser();
+    if (!user) {
+      alert("You must be logged in");
+      return;
+    }
 
-e.preventDefault();
+    try {
+      joinTeam(teamId, user.username);
+      alert("Joined team!");
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 
-if (!code.trim()) {
-  alert("Enter a join code");
-  return;
-}
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Join Team</h1>
 
-const user = auth.currentUser;
+      <input
+        placeholder="Team ID"
+        value={teamId}
+        onChange={(e) => setTeamId(e.target.value)}
+      />
 
-if (!user) {
-  alert("Not logged in");
-  return;
-}
-
-setLoading(true);
-
-try {
-
-  const q = query(
-    collection(db, "teams"),
-    where("joinCode", "==", code.trim())
+      <button onClick={handleJoin}>Join</button>
+    </div>
   );
-
-  const snapshot = await getDocs(q);
-
-  if (snapshot.empty) {
-    alert("Team not found");
-    setLoading(false);
-    return;
-  }
-
-  const teamDoc = snapshot.docs[0];
-  const teamId = teamDoc.id;
-
-  await updateDoc(doc(db, "users", user.uid), {
-    teamId: teamId,
-    role: "scout"
-  });
-
-  window.location.href = "/dashboard";
-
-} catch (err) {
-
-  console.error(err);
-  alert("Failed to join team");
-
-}
-
-setLoading(false);
-
-
-}
-
-return (
-
-
-<div style={{ maxWidth: "500px", margin: "auto" }}>
-
-  <h1>Join a Team</h1>
-
-  <form onSubmit={joinTeam}>
-
-    <input
-      placeholder="Enter Join Code"
-      value={code}
-      onChange={(e)=>setCode(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "10px",
-        marginBottom: "15px"
-      }}
-    />
-
-    <button
-      type="submit"
-      disabled={loading}
-      style={{
-        width: "100%",
-        padding: "12px"
-      }}
-    >
-      {loading ? "Joining..." : "Join Team"}
-    </button>
-
-  </form>
-
-</div>
-
-
-);
-
 };
 
 export default JoinTeam;
