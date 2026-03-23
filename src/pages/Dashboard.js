@@ -1,100 +1,44 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { getScoutEntries, clearScoutEntries } from "../utils/localDB";
+import { calculateTeamStats } from "../utils/statsCalculator";
 
 const Dashboard = () => {
 
-const [eventName, setEventName] = useState("Loading...");
-const navigate = useNavigate();
+  const [stats, setStats] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
+    const data = getScoutEntries();
+    const calculated = calculateTeamStats(data);
+    setStats(calculated);
+  }, []);
 
+  return (
+    <div style={{ padding: "20px" }}>
 
-async function loadTeam() {
+      <h1>Dashboard</h1>
 
-  try {
+      <button onClick={()=>{
+        clearScoutEntries();
+        window.location.reload();
+      }}>
+        Clear Data
+      </button>
 
-    const user = auth.currentUser;
+      {stats.map(team => (
+        <div key={team.team} style={{
+          padding:"10px",
+          margin:"10px 0",
+          background:"#2c2c2c",
+          borderRadius:"8px"
+        }}>
+          <strong>Team {team.team}</strong><br/>
+          Auton: {team.autonAvg}<br/>
+          Accuracy: {team.accuracyAvg}
+        </div>
+      ))}
 
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    //  get user doc
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-
-    if (!userSnap.exists()) {
-      navigate("/team");
-      return;
-    }
-
-    const userData = userSnap.data();
-    const teamId = userData.teamId;
-
-    //  no team → go back
-    if (!teamId) {
-      navigate("/team");
-      return;
-    }
-
-    //  get team doc
-    const teamSnap = await getDoc(doc(db, "teams", teamId));
-
-    //  team missing → FIX BROKEN STATE
-    if (!teamSnap.exists()) {
-      console.error("Team does not exist");
-      navigate("/team");
-      return;
-    }
-
-    const teamData = teamSnap.data();
-
-    setEventName(
-      teamData.eventName && teamData.eventName !== ""
-        ? teamData.eventName
-        : "No event selected"
-    );
-
-  } catch (err) {
-
-    console.error("Dashboard error:", err);
-    setEventName("Error loading event");
-
-  }
-
-}
-
-loadTeam();
-
-
-}, [navigate]);
-
-return (
-
-<div>
-
-  <h1>Dashboard</h1>
-
-  <div style={{
-    border: "1px solid #444",
-    padding: "20px",
-    marginBottom: "20px"
-  }}>
-    <h2>Current Event</h2>
-    <div style={{ fontSize: "20px" }}>
-      {eventName}
     </div>
-  </div>
-
-  <p>Welcome to your scouting dashboard.</p>
-
-</div>
-
-
-);
-
+  );
 };
 
 export default Dashboard;
