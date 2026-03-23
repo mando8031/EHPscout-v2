@@ -1,15 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../firebase";
-import {
-collection,
-addDoc,
-query,
-where,
-getDocs,
-updateDoc,
-doc
-} from "firebase/firestore";
+
 
 const TeamSetup = () => {
 
