@@ -1,21 +1,27 @@
 import React, { useState } from "react";
+import { createTeam } from "../utils/localTeams";
+import { getCurrentUser } from "../utils/localAuth";
 
-export default function TeamSelect() {
+const CreateTeam = () => {
 
-  const [teamName, setTeamName] = useState("");
+  const [name, setName] = useState("");
 
-  const handleCreateTeam = () => {
-    if (!teamName) {
+  const handleCreate = () => {
+
+    if (!name) {
       alert("Enter a team name");
       return;
     }
 
     try {
-      // Save team to localStorage
-      localStorage.setItem("team", teamName);
+      const user = getCurrentUser();
 
-      //  Force navigation so app updates
-      window.location.href = "/event-select";
+      const team = createTeam(name, user.username);
+
+      alert(`Team created! Join Code: ${team.code}`);
+
+      //  FORCE FULL RELOAD so App.js updates userHasTeam
+      window.location.href = "/dashboard";
 
     } catch (err) {
       console.error(err);
@@ -24,22 +30,18 @@ export default function TeamSelect() {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "400px", margin: "auto" }}>
-      <h1>Create or Join Team</h1>
+    <div>
+      <h1>Create Team</h1>
 
       <input
         placeholder="Team Name"
-        value={teamName}
-        onChange={(e) => setTeamName(e.target.value)}
-        style={{ width: "100%", padding: "12px", marginBottom: "20px" }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
 
-      <button
-        onClick={handleCreateTeam}
-        style={{ width: "100%", padding: "15px" }}
-      >
-        Create Team
-      </button>
+      <button onClick={handleCreate}>Create</button>
     </div>
   );
-}
+};
+
+export default CreateTeam;
