@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
-import { signOut, deleteUser } from "firebase/auth";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
 const AccountSettings = () => {
