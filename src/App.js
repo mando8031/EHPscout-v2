@@ -14,6 +14,7 @@ function App() {
 
   const user = getCurrentUser();
   const teams = getTeams();
+  const selectedEvent = localStorage.getItem("selectedEvent");
 
   const userHasTeam =
     user && teams.some(t => t.members?.includes(user.username));
@@ -34,7 +35,7 @@ function App() {
         {user && (
           <>
             <Link style={{ color: "white" }} to="/create-team">Team</Link>
-            <Link style={{ color: "white" }} to="/event-select">Events</Link>
+            <Link style={{ color: "white" }} to="/event-select">Change Event</Link>
             <Link style={{ color: "white" }} to="/scout">Scout</Link>
             <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
           </>
@@ -47,26 +48,31 @@ function App() {
         <Route
           path="/"
           element={
-            user ? <Navigate to="/dashboard" /> : <ScoutLogin />
+            user
+              ? userHasTeam
+                ? (selectedEvent
+                    ? <Navigate to="/dashboard" />
+                    : <Navigate to="/event-select" />)
+                : <Navigate to="/create-team" />
+              : <ScoutLogin />
           }
         />
 
-        {/* LOGIN */}
-        <Route path="/login" element={<ScoutLogin />} />
+        {/* EVENT SELECT */}
+        <Route
+          path="/event-select"
+          element={
+            user
+              ? <EventSelect />
+              : <Navigate to="/" />
+          }
+        />
 
         {/* TEAM */}
         <Route
           path="/create-team"
           element={
-            user ? <CreateTeam /> : <Navigate to="/login" />
-          }
-        />
-
-        {/* EVENTS */}
-        <Route
-          path="/event-select"
-          element={
-            user ? <EventSelect /> : <Navigate to="/login" />
+            user ? <CreateTeam /> : <Navigate to="/" />
           }
         />
 
@@ -74,7 +80,9 @@ function App() {
         <Route
           path="/scout"
           element={
-            user ? <ScoutForm /> : <Navigate to="/login" />
+            user && selectedEvent
+              ? <ScoutForm />
+              : <Navigate to="/event-select" />
           }
         />
 
@@ -82,11 +90,13 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            user ? <Dashboard /> : <Navigate to="/login" />
+            user && selectedEvent
+              ? <Dashboard />
+              : <Navigate to="/event-select" />
           }
         />
 
-        {/* FALLBACK (prevents white screen) */}
+        {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" />} />
 
       </Routes>
