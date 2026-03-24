@@ -2,138 +2,45 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getEvents } from "../services/tbaService";
 
-const EventSelect = () => {
-  const [events, setEvents] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-
+export default function EventSelect() {
   const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    async function load() {
+    async function loadEvents() {
       const data = await getEvents(new Date().getFullYear());
-
       if (Array.isArray(data)) {
-        const sorted = data.sort(
-          (a, b) => new Date(a.start_date) - new Date(b.start_date)
-        );
-
-        setEvents(sorted);
+        setEvents(data);
       }
     }
-
-    load();
+    loadEvents();
   }, []);
 
-  const today = new Date();
+  const handleSelect = (eventKey) => {
+    // ✅ CRITICAL FIX
+    localStorage.setItem("selectedEvent", eventKey);
 
-  function getStatus(event) {
-    const start = new Date(event.start_date);
-    const end = new Date(event.end_date);
-
-    if (today < start) return "upcoming";
-    if (today > end) return "finished";
-    return "active";
-  }
-
-  const filteredEvents = events
-    .filter((event) =>
-      event.name.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((event) => {
-      if (filter === "all") return true;
-      return getStatus(event) === filter;
-    });
-
-  // ---- GROUP EVENTS BY DISTRICT ----
-
-  const districtGroups = {};
-
-  filteredEvents.forEach((event) => {
-    const districtKey = event.district?.abbreviation || "regional";
-
-    if (!districtGroups[districtKey]) {
-      districtGroups[districtKey] = [];
-    }
-
-    districtGroups[districtKey].push(event);
-  });
-
-  // ---- SORT DISTRICTS ----
-
-  const sortedDistricts = Object.keys(districtGroups).sort((a, b) => {
-    if (a === "fim") return -1;
-    if (b === "fim") return 1;
-    return a.localeCompare(b);
-  });
-
-  // Friendly names
-  function getDistrictName(key) {
-    if (key === "fim") return "Michigan District (FiM)";
-    if (key === "regional") return "Regional Events";
-    return key.toUpperCase() + " District";
-  }
+    navigate("/scout");
+  };
 
   return (
-    <div style={{ padding: "30px", maxWidth: "900px" }}>
-      <h1>Event Select</h1>
+    <div style={{ padding: "20px" }}>
+      <h1>Select Event</h1>
 
-      <input
-        type="text"
-        placeholder="Search events..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          padding: "10px",
-          width: "100%",
-          marginBottom: "15px",
-        }}
-      />
-
-      <div style={{ marginBottom: "20px" }}>
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("active")}>Active</button>
-        <button onClick={() => setFilter("upcoming")}>Upcoming</button>
-        <button onClick={() => setFilter("finished")}>Finished</button>
-      </div>
-
-      {sortedDistricts.map((districtKey) => (
-        <div key={districtKey} style={{ marginBottom: "25px" }}>
-          
-          {/* District Header */}
-          <h2 style={{ marginBottom: "10px", borderBottom: "2px solid #444" }}>
-            {getDistrictName(districtKey)}
-          </h2>
-
-          {districtGroups[districtKey].map((event) => {
-            const status = getStatus(event);
-
-            return (
-              <div
-                key={event.key}
-                style={{
-                  padding: "12px",
-                  marginBottom: "8px",
-                  background: "#2c2c2c",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-                onClick={() => navigate(`/matches/${event.key}`)}
-              >
-                <div style={{ fontWeight: "bold" }}>{event.name}</div>
-
-                <div>
-                  {event.start_date} → {event.end_date}
-                </div>
-
-                <div>Status: {status}</div>
-              </div>
-            );
-          })}
-        </div>
+      {events.map(event => (
+        <button
+          key={event.key}
+          onClick={() => handleSelect(event.key)}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "15px",
+            marginBottom: "10px"
+          }}
+        >
+          {event.name}
+        </button>
       ))}
     </div>
   );
-};
-
-export default EventSelect;
+}
