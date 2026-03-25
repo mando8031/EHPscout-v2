@@ -1,82 +1,100 @@
-import React from "react";
+import React, { useState } from "react";
+import QRCode from "qrcode.react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 export default function DataSync() {
 
-  // EXPORT
-  const handleExport = () => {
-    const data = localStorage.getItem("scoutingData") || "[]";
+  const [qrData, setQrData] = useState("");
+  const [scanning, setScanning] = useState(false);
 
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+  // 📤 GENERATE QR
+  const handleGenerateQR = () => {
+    const data = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "scouting-data.json";
-    a.click();
+    // ⚠️ limit size for QR
+    const recent = data.slice(-25);
+
+    const payload = JSON.stringify(recent);
+
+    setQrData(payload);
   };
 
-  // IMPORT + MERGE
-  const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // 📥 START SCANNER
+  const startScanner = () => {
+    setScanning(true);
 
-    const reader = new FileReader();
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: 250 },
+      false
+    );
 
-    reader.onload = () => {
-      try {
-        const imported = JSON.parse(reader.result);
+    scanner.render(
+      (decodedText) => {
+        try {
+          const imported = JSON.parse(decodedText);
 
-        const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
+          const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
-        // MERGE BY ID
-        const map = {};
+          const map = {};
 
-        [...existing, ...imported].forEach(entry => {
-          map[entry.id] = entry;
-        });
+          [...existing, ...imported].forEach(entry => {
+            map[entry.id] = entry;
+          });
 
-        const merged = Object.values(map);
+          const merged = Object.values(map);
 
-        localStorage.setItem("scoutingData", JSON.stringify(merged));
+          localStorage.setItem("scoutingData", JSON.stringify(merged));
 
-        alert("Data merged successfully!");
-      } catch (err) {
-        console.error(err);
-        alert("Invalid file");
+          alert("QR Data Merged!");
+
+          scanner.clear();
+          setScanning(false);
+
+        } catch (err) {
+          console.error(err);
+          alert("Invalid QR Data");
+        }
+      },
+      (error) => {
+        // ignore scan errors
       }
-    };
-
-    reader.readAsText(file);
+    );
   };
 
   return (
     <div style={{ padding: "20px", color: "white" }}>
-      <h1>Offline Sync</h1>
+      <h1>QR Sync</h1>
 
-      <div style={{ marginBottom: "20px" }}>
+      {/* EXPORT */}
+      <button
+        onClick={handleGenerateQR}
+        style={{ width: "100%", padding: "15px", marginBottom: "15px" }}
+      >
+        Generate QR Code
+      </button>
+
+      {qrData && (
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <QRCode value={qrData} size={250} />
+          <p>Have another device scan this</p>
+        </div>
+      )}
+
+      {/* IMPORT */}
+      {!scanning && (
         <button
-          onClick={handleExport}
-          style={{
-            width: "100%",
-            padding: "15px",
-            marginBottom: "10px"
-          }}
+          onClick={startScanner}
+          style={{ width: "100%", padding: "15px" }}
         >
-          Export Data
+          Scan QR Code
         </button>
+      )}
 
-        <input
-          type="file"
-          accept="application/json"
-          onChange={handleImport}
-          style={{ width: "100%" }}
-        />
-      </div>
-
-      <p>
-        Export your data and share it with other scouts.  
-        Import their files to merge data together.
-      </p>
+      {/* CAMERA */}
+      {scanning && (
+        <div id="reader" style={{ marginTop: "20px" }} />
+      )}
     </div>
   );
 }
