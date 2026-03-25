@@ -49,11 +49,9 @@ function App() {
           path="/"
           element={
             user
-              ? userHasTeam
-                ? (selectedEvent
-                    ? <Navigate to="/dashboard" />
-                    : <Navigate to="/event-select" />)
-                : <Navigate to="/create-team" />
+              ? (selectedEvent
+                  ? <Navigate to="/dashboard" />
+                  : <Navigate to="/event-select" />)
               : <ScoutLogin />
           }
         />
@@ -66,7 +64,7 @@ function App() {
           }
         />
 
-        {/* TEAM */}
+        {/* TEAM (still exists but not forced) */}
         <Route
           path="/create-team"
           element={
@@ -74,7 +72,7 @@ function App() {
           }
         />
 
-        {/* NO EVENT PAGE */}
+        {/* NO EVENT */}
         <Route
           path="/no-event"
           element={
@@ -87,11 +85,9 @@ function App() {
           path="/scout"
           element={
             user
-              ? userHasTeam
-                ? (selectedEvent
-                    ? <ScoutForm />
-                    : <Navigate to="/no-event" />)
-                : <Navigate to="/create-team" />
+              ? (selectedEvent
+                  ? <ScoutForm />
+                  : <Navigate to="/no-event" />)
               : <Navigate to="/" />
           }
         />
@@ -101,16 +97,14 @@ function App() {
           path="/dashboard"
           element={
             user
-              ? userHasTeam
-                ? (selectedEvent
-                    ? <Dashboard />
-                    : <Navigate to="/no-event" />)
-                : <Navigate to="/create-team" />
+              ? (selectedEvent
+                  ? <Dashboard />
+                  : <Navigate to="/no-event" />)
               : <Navigate to="/" />
           }
         />
 
-        {/* DATASYNC */}
+        {/* SYNC */}
         <Route
           path="/sync"
           element={
