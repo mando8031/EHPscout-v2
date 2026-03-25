@@ -31,18 +31,15 @@ function App() {
         background: "#111",
         color: "white"
       }}>
-        <Link style={{ color: "white" }} to="/">Home</Link>
-
         {user && (
           <>
-            <Link style={{ color: "white" }} to="/create-team">Team</Link>
-            <Link style={{ color: "white" }} to="/event-select">Change Event</Link>
+            <Link style={{ color: "white" }} to="/event-select">Event</Link>
             <Link style={{ color: "white" }} to="/scout">Scout</Link>
             <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
             <Link style={{ color: "white" }} to="/sync">Sync</Link>
           </>
-        )}
-      </nav>
+       )}
+     </nav>
 
       <Routes>
 
