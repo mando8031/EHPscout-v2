@@ -6,6 +6,7 @@ import CreateTeam from "./pages/CreateTeam";
 import EventSelect from "./pages/EventSelect";
 import ScoutForm from "./pages/ScoutForm";
 import Dashboard from "./pages/Dashboard";
+import DataSync from "./pages/DataSync";
 
 import { getCurrentUser } from "./utils/localAuth";
 import { getTeams } from "./utils/localTeams";
@@ -38,6 +39,7 @@ function App() {
             <Link style={{ color: "white" }} to="/event-select">Change Event</Link>
             <Link style={{ color: "white" }} to="/scout">Scout</Link>
             <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
+            <Link style={{ color: "white" }} to="/sync">Sync</Link>
           </>
         )}
       </nav>
@@ -99,6 +101,11 @@ function App() {
         {/* FALLBACK */}
         <Route path="*" element={<Navigate to="/" />} />
 
+        {/* DATASYNC */}
+        <Route
+          path="/sync"
+          element={user ? <DataSync /> : <Navigate to="/" />}
+        />
       </Routes>
 
     </Router>
