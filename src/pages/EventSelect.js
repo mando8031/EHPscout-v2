@@ -4,6 +4,8 @@ import { getEvents } from "../services/tbaService";
 export default function EventSelect() {
 
   const [events, setEvents] = useState([]);
+  const [search, setSearch] = useState("");
+
   const [selectedEvent, setSelectedEvent] = useState(
     localStorage.getItem("selectedEvent")
   );
@@ -21,11 +23,16 @@ export default function EventSelect() {
     loadEvents();
   }, []);
 
+  // 🔍 FILTER EVENTS
+  const filteredEvents = events.filter(event =>
+    event.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   // 🧠 GROUP EVENTS BY DISTRICT
   const grouped = {};
 
-  events.forEach(event => {
-    const district = event.district?.display_name || "Other";
+  filteredEvents.forEach(event => {
+    const district = event.district?.display_name || "Regional / Other";
 
     if (!grouped[district]) grouped[district] = [];
     grouped[district].push(event);
@@ -45,14 +52,28 @@ export default function EventSelect() {
 
     setSelectedEvent(event.key);
     setSelectedEventName(event.name);
-
   };
 
   return (
     <div style={{ padding: "15px", color: "white" }}>
       <h1>Select Event</h1>
 
-      {/* ✅ SHOW SELECTED EVENT NAME */}
+      {/* 🔍 SEARCH BAR */}
+      <input
+        type="text"
+        placeholder="Search events..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px",
+          marginBottom: "15px",
+          borderRadius: "10px",
+          border: "none"
+        }}
+      />
+
+      {/* ✅ SELECTED EVENT DISPLAY */}
       {selectedEventName && (
         <div style={{
           background: "#1e1e1e",
@@ -64,6 +85,12 @@ export default function EventSelect() {
         </div>
       )}
 
+      {/* 📭 NO RESULTS */}
+      {filteredEvents.length === 0 && (
+        <p>No events found</p>
+      )}
+
+      {/* 📦 DISTRICT GROUPS */}
       {sortedDistricts.map(district => (
         <div key={district} style={{ marginBottom: "20px" }}>
 
@@ -90,7 +117,6 @@ export default function EventSelect() {
                   borderRadius: "10px",
                   border: "none",
 
-                  // 🎯 HIGHLIGHT
                   background: isSelected ? "#00c853" : "#1e1e1e",
                   color: isSelected ? "black" : "white",
                   fontWeight: isSelected ? "bold" : "normal"
