@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 
 import ScoutLogin from "./pages/ScoutLogin";
@@ -16,7 +16,20 @@ function App() {
 
   const user = getCurrentUser();
   const teams = getTeams();
-  const selectedEvent = localStorage.getItem("selectedEvent");
+
+  const [selectedEvent, setSelectedEvent] = useState(
+    localStorage.getItem("selectedEvent")
+  );
+
+  // 🔥 LISTEN FOR CHANGES
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = localStorage.getItem("selectedEvent");
+      setSelectedEvent(current);
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Router>
@@ -61,11 +74,11 @@ function App() {
           }
         />
 
-        {/* TEAM (still exists but optional) */}
+        {/* NO EVENT */}
         <Route
-          path="/create-team"
+          path="/no-event"
           element={
-            user ? <CreateTeam /> : <Navigate to="/" />
+            user ? <NoEvent /> : <Navigate to="/" />
           }
         />
 
@@ -94,6 +107,14 @@ function App() {
           path="/sync"
           element={
             user ? <DataSync /> : <Navigate to="/" />
+          }
+        />
+
+        {/* TEAM (optional) */}
+        <Route
+          path="/create-team"
+          element={
+            user ? <CreateTeam /> : <Navigate to="/" />
           }
         />
 
