@@ -18,9 +18,6 @@ function App() {
   const teams = getTeams();
   const selectedEvent = localStorage.getItem("selectedEvent");
 
-  const userHasTeam =
-    user && teams.some(t => t.members?.includes(user.username));
-
   return (
     <Router>
 
@@ -64,19 +61,11 @@ function App() {
           }
         />
 
-        {/* TEAM (still exists but not forced) */}
+        {/* TEAM (still exists but optional) */}
         <Route
           path="/create-team"
           element={
             user ? <CreateTeam /> : <Navigate to="/" />
-          }
-        />
-
-        {/* NO EVENT */}
-        <Route
-          path="/no-event"
-          element={
-            user ? <NoEvent /> : <Navigate to="/" />
           }
         />
 
@@ -85,9 +74,7 @@ function App() {
           path="/scout"
           element={
             user
-              ? (selectedEvent
-                  ? <ScoutForm />
-                  : <Navigate to="/no-event" />)
+              ? (selectedEvent ? <ScoutForm /> : <NoEvent />)
               : <Navigate to="/" />
           }
         />
@@ -97,9 +84,7 @@ function App() {
           path="/dashboard"
           element={
             user
-              ? (selectedEvent
-                  ? <Dashboard />
-                  : <Navigate to="/no-event" />)
+              ? (selectedEvent ? <Dashboard /> : <NoEvent />)
               : <Navigate to="/" />
           }
         />
