@@ -23,16 +23,23 @@ export default function EventSelect() {
     loadEvents();
   }, []);
 
-  // 🔍 FILTER EVENTS
+  // 🔍 FILTER
   const filteredEvents = events.filter(event =>
     event.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🧠 GROUP EVENTS BY DISTRICT
+  // 🧠 CLEAN DISTRICT NAME
+  const getDistrictName = (event) => {
+    if (event.district?.display_name) return event.district.display_name;
+    if (event.district_key) return event.district_key.toUpperCase();
+    return "Regional Events";
+  };
+
+  // 🧠 GROUP
   const grouped = {};
 
   filteredEvents.forEach(event => {
-    const district = event.district?.display_name || "Regional / Other";
+    const district = getDistrictName(event);
 
     if (!grouped[district]) grouped[district] = [];
     grouped[district].push(event);
@@ -45,7 +52,33 @@ export default function EventSelect() {
     return a.localeCompare(b);
   });
 
-  // 🟢 SELECT EVENT
+  // 📅 FORMAT DATE
+  const formatDate = (event) => {
+    if (!event.start_date) return "";
+    const start = new Date(event.start_date);
+    const end = new Date(event.end_date);
+
+    return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+  };
+
+  // 🟢 STATUS
+  const getStatus = (event) => {
+    const now = new Date();
+    const start = new Date(event.start_date);
+    const end = new Date(event.end_date);
+
+    if (now < start) return "upcoming";
+    if (now > end) return "past";
+    return "active";
+  };
+
+  const getStatusColor = (status) => {
+    if (status === "active") return "#00e676";   // green
+    if (status === "upcoming") return "#ffd600"; // yellow
+    return "#9e9e9e"; // grey
+  };
+
+  // 🟢 SELECT
   const handleSelect = (event) => {
     localStorage.setItem("selectedEvent", event.key);
     localStorage.setItem("selectedEventName", event.name);
@@ -58,7 +91,7 @@ export default function EventSelect() {
     <div style={{ padding: "15px", color: "white" }}>
       <h1>Select Event</h1>
 
-      {/* 🔍 SEARCH BAR */}
+      {/* 🔍 SEARCH */}
       <input
         type="text"
         placeholder="Search events..."
@@ -73,7 +106,7 @@ export default function EventSelect() {
         }}
       />
 
-      {/* ✅ SELECTED EVENT DISPLAY */}
+      {/* 📌 SELECTED */}
       {selectedEventName && (
         <div style={{
           background: "#1e1e1e",
@@ -85,16 +118,13 @@ export default function EventSelect() {
         </div>
       )}
 
-      {/* 📭 NO RESULTS */}
-      {filteredEvents.length === 0 && (
-        <p>No events found</p>
-      )}
+      {filteredEvents.length === 0 && <p>No events found</p>}
 
-      {/* 📦 DISTRICT GROUPS */}
+      {/* 📦 GROUPED */}
       {sortedDistricts.map(district => (
-        <div key={district} style={{ marginBottom: "20px" }}>
+        <div key={district} style={{ marginBottom: "25px" }}>
 
-          {/* 🧱 DISTRICT HEADER */}
+          {/* 🧱 HEADER */}
           <h2 style={{
             borderBottom: "2px solid #444",
             paddingBottom: "5px"
@@ -104,6 +134,7 @@ export default function EventSelect() {
 
           {grouped[district].map(event => {
             const isSelected = selectedEvent === event.key;
+            const status = getStatus(event);
 
             return (
               <button
@@ -116,13 +147,34 @@ export default function EventSelect() {
                   marginTop: "8px",
                   borderRadius: "10px",
                   border: "none",
+                  textAlign: "left",
 
                   background: isSelected ? "#00c853" : "#1e1e1e",
-                  color: isSelected ? "black" : "white",
-                  fontWeight: isSelected ? "bold" : "normal"
+                  color: isSelected ? "black" : "white"
                 }}
               >
-                {event.name}
+
+                {/* 🟢 STATUS DOT */}
+                <div style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  background: getStatusColor(status),
+                  display: "inline-block",
+                  marginRight: "8px"
+                }} />
+
+                <b>{event.name}</b>
+
+                {/* 📅 DATE */}
+                <div style={{
+                  fontSize: "12px",
+                  opacity: 0.8,
+                  marginTop: "5px"
+                }}>
+                  {formatDate(event)}
+                </div>
+
               </button>
             );
           })}
