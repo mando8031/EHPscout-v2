@@ -150,7 +150,9 @@ export default function EventSelect() {
 
           <h2 style={{
             borderBottom: "2px solid #444",
-            paddingBottom: "5px"
+            paddingBottom: "5px",
+            color: "#111",            // 🔥 dark text so it's visible
+            marginTop: "15px"
           }}>
             {district}
           </h2>
