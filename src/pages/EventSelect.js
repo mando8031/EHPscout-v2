@@ -5,6 +5,7 @@ export default function EventSelect() {
 
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState("");
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   const [selectedEvent, setSelectedEvent] = useState(
     localStorage.getItem("selectedEvent")
@@ -23,20 +24,24 @@ export default function EventSelect() {
     loadEvents();
   }, []);
 
-  // 🔥 DISTRICT MAP
-  const districtMap = {
-    fim: "Michigan District",
-    fin: "Indiana District",
-    fit: "Texas District",
-    fma: "Mid-Atlantic District",
-    fne: "New England District",
-    fnc: "North Carolina District",
-    pnw: "Pacific Northwest District",
-    ont: "Ontario District",
-    isr: "Israel District"
+  // 🟢 STATUS
+  const getStatus = (event) => {
+    const now = new Date();
+    const start = new Date(event.start_date);
+    const end = new Date(event.end_date);
+
+    if (now < start) return "upcoming";
+    if (now > end) return "past";
+    return "active";
   };
 
-  // 🔥 FIXED FUNCTION (SAFE)
+  const getStatusColor = (status) => {
+    if (status === "active") return "#00e676";
+    if (status === "upcoming") return "#ffd600";
+    return "#9e9e9e";
+  };
+
+  // 🔥 DISTRICT DETECTION (from key)
   const getDistrictName = (event) => {
     if (!event.key) return "Regional Events";
 
@@ -53,10 +58,13 @@ export default function EventSelect() {
     return "Regional Events";
   };
 
-  // 🔍 FILTER
-  const filteredEvents = events.filter(event =>
-    event.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // 🔍 FILTER (search + active toggle)
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.name.toLowerCase().includes(search.toLowerCase());
+    const matchesActive = showActiveOnly ? getStatus(event) === "active" : true;
+
+    return matchesSearch && matchesActive;
+  });
 
   // 🧠 GROUP
   const grouped = {};
@@ -85,23 +93,6 @@ export default function EventSelect() {
     return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
   };
 
-  // 🟢 STATUS
-  const getStatus = (event) => {
-    const now = new Date();
-    const start = new Date(event.start_date);
-    const end = new Date(event.end_date);
-
-    if (now < start) return "upcoming";
-    if (now > end) return "past";
-    return "active";
-  };
-
-  const getStatusColor = (status) => {
-    if (status === "active") return "#00e676";
-    if (status === "upcoming") return "#ffd600";
-    return "#9e9e9e";
-  };
-
   // 🟢 SELECT
   const handleSelect = (event) => {
     localStorage.setItem("selectedEvent", event.key);
@@ -115,7 +106,7 @@ export default function EventSelect() {
     <div style={{ padding: "15px", color: "#111" }}>
       <h1>Select Event</h1>
 
-      {/* SEARCH */}
+      {/* 🔍 SEARCH */}
       <input
         type="text"
         placeholder="Search events..."
@@ -124,13 +115,30 @@ export default function EventSelect() {
         style={{
           width: "100%",
           padding: "12px",
-          marginBottom: "15px",
+          marginBottom: "10px",
           borderRadius: "10px",
           border: "none"
         }}
       />
 
-      {/* SELECTED */}
+      {/* 🔥 ACTIVE FILTER BUTTON */}
+      <button
+        onClick={() => setShowActiveOnly(!showActiveOnly)}
+        style={{
+          width: "100%",
+          padding: "10px",
+          marginBottom: "15px",
+          borderRadius: "10px",
+          border: "none",
+          background: showActiveOnly ? "#00c853" : "#ccc",
+          color: showActiveOnly ? "black" : "black",
+          fontWeight: "bold"
+        }}
+      >
+        {showActiveOnly ? "Showing Active Events" : "Show Active Events Only"}
+      </button>
+
+      {/* 📌 SELECTED */}
       {selectedEventName && (
         <div style={{
           background: "#e0e0e0",
