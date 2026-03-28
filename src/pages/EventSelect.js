@@ -38,10 +38,18 @@ export default function EventSelect() {
 
   // 🔥 FIXED FUNCTION (SAFE)
   const getDistrictName = (event) => {
-    if (event.district_key) {
-      const key = event.district_key.replace(/^\d+/, "");
-      return districtMap[key] || "Other District";
-    }
+    if (!event.key) return "Regional Events";
+
+    const key = event.key.toLowerCase();
+
+    if (key.includes("mi")) return "Michigan District";
+    if (key.includes("on")) return "Ontario District";
+    if (key.includes("in")) return "Indiana District";
+    if (key.includes("tx")) return "Texas District";
+    if (key.includes("ne")) return "New England District";
+    if (key.includes("nc")) return "North Carolina District";
+    if (key.includes("pnw")) return "Pacific Northwest District";
+
     return "Regional Events";
   };
 
