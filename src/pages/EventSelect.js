@@ -36,18 +36,13 @@ export default function EventSelect() {
     isr: "Israel District"
   };
 
-  // 🧠 GET DISTRICT (ROBUST VERSION)
+  // 🔥 FIXED FUNCTION (SAFE)
   const getDistrictName = (event) => {
     if (event.district_key) {
       const key = event.district_key.replace(/^\d+/, "");
       return districtMap[key] || "Other District";
     }
-
-    // 👇 EVERYTHING ELSE
     return "Regional Events";
-  };
-
-    return districtMap[key] || "Regional Events";
   };
 
   // 🔍 FILTER
@@ -57,18 +52,20 @@ export default function EventSelect() {
 
   // 🧠 GROUP
   const grouped = {};
-
   filteredEvents.forEach(event => {
     const district = getDistrictName(event);
-
     if (!grouped[district]) grouped[district] = [];
     grouped[district].push(event);
   });
 
-  // 🧠 SORT DISTRICTS
+  // 🧠 SORT
   const sortedDistricts = Object.keys(grouped).sort((a, b) => {
     if (a === "Michigan District") return -1;
     if (b === "Michigan District") return 1;
+
+    if (a === "Regional Events") return 1;
+    if (b === "Regional Events") return -1;
+
     return a.localeCompare(b);
   });
 
@@ -107,7 +104,7 @@ export default function EventSelect() {
   };
 
   return (
-    <div style={{ padding: "15px", color: "white" }}>
+    <div style={{ padding: "15px", color: "#111" }}>
       <h1>Select Event</h1>
 
       {/* SEARCH */}
@@ -128,7 +125,7 @@ export default function EventSelect() {
       {/* SELECTED */}
       {selectedEventName && (
         <div style={{
-          background: "#1e1e1e",
+          background: "#e0e0e0",
           padding: "10px",
           borderRadius: "10px",
           marginBottom: "15px"
@@ -136,11 +133,6 @@ export default function EventSelect() {
           <b>Selected Event:</b> {selectedEventName}
         </div>
       )}
-
-      {/* DEBUG (REMOVE LATER) */}
-      <p style={{ fontSize: "12px", opacity: 0.6 }}>
-        Districts: {sortedDistricts.join(", ")}
-      </p>
 
       {filteredEvents.length === 0 && <p>No events found</p>}
 
@@ -151,8 +143,7 @@ export default function EventSelect() {
           <h2 style={{
             borderBottom: "2px solid #444",
             paddingBottom: "5px",
-            color: "#111",            // 🔥 dark text so it's visible
-            marginTop: "15px"
+            color: "#111"
           }}>
             {district}
           </h2>
