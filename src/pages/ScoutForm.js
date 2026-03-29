@@ -1,288 +1,143 @@
 import React, { useEffect, useState } from "react";
-import { getMatches } from "../services/tbaService";
+import NoEvent from "./NoEvent";
+import NoData from "./NoData";
 
-export default function ScoutForm() {
+export default function Dashboard() {
 
-  const [matches, setMatches] = useState([]);
-  const [selectedMatch, setSelectedMatch] = useState("");
   const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState({
-    robotType: [],
-    focus: [],
-    focusOther: "",
-    failures: [],
-    failuresOther: "",
-    accuracy: 3,
-    shootingSpeed: 3,
-    intakeSpeed: 3,
-    auton: [],
-    autonOther: "",
-    climb: [],
-    awareness: "",
-    notes: ""
-  });
-
-  const eventKey = localStorage.getItem("selectedEvent");
+  const selectedEvent = localStorage.getItem("selectedEvent");
 
   useEffect(() => {
-    async function loadMatches() {
-      if (!eventKey) return;
 
-      const data = await getMatches(eventKey);
-
-      if (Array.isArray(data)) {
-        const filtered = data
-          .filter(m => m.comp_level === "qm")
-          .sort((a, b) => a.match_number - b.match_number);
-
-        setMatches(filtered);
-      }
+    if (!selectedEvent) {
+      setLoading(false);
+      return;
     }
 
-    loadMatches();
-  }, [eventKey]);
+    const data = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
-  useEffect(() => {
-    if (!selectedMatch) return;
+    const filtered = data.filter(d => d.event === selectedEvent);
 
-    const match = matches.find(m => m.key === selectedMatch);
-    if (!match) return;
+    if (filtered.length === 0) {
+      setTeams([]);
+      setLoading(false);
+      return;
+    }
 
-    const allTeams = [
-      ...match.alliances.red.team_keys,
-      ...match.alliances.blue.team_keys
-    ];
+    const grouped = {};
 
-    setTeams(allTeams);
-  }, [selectedMatch, matches]);
-
-  const toggleMulti = (field, value) => {
-    setForm(prev => {
-      const exists = prev[field].includes(value);
-      return {
-        ...prev,
-        [field]: exists
-          ? prev[field].filter(v => v !== value)
-          : [...prev[field], value]
-      };
+    filtered.forEach(entry => {
+      if (!grouped[entry.team]) grouped[entry.team] = [];
+      grouped[entry.team].push(entry);
     });
+
+    const ranked = Object.keys(grouped).map(team => ({
+      team,
+      entries: grouped[team]
+    }));
+
+    setTeams(ranked);
+    setLoading(false);
+
+  }, [selectedEvent]);
+
+  // 🔴 LOADING
+  if (loading) {
+    return <div style={{ padding: "20px", color: "white" }}>Loading...</div>;
+  }
+
+  // 🔴 NO EVENT
+  if (!selectedEvent) {
+    return <NoEvent />;
+  }
+
+  // 🔴 NO DATA
+  if (teams.length === 0) {
+    return <NoData />;
+  }
+
+  // 🧠 HELPER: display arrays + "Other"
+  const formatField = (arr, other) => {
+    if (!arr || arr.length === 0) return "None";
+
+    let values = [...arr];
+
+    if (arr.includes("Other") && other) {
+      values = values.map(v => v === "Other" ? `Other: ${other}` : v);
+    }
+
+    return values.join(", ");
   };
-
-  const handleSubmit = () => {
-
-  const eventKey = localStorage.getItem("selectedEvent");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const entry = {
-    id: `${Date.now()}`,
-    event: eventKey,
-    match: selectedMatch,
-    team: selectedTeam,
-    scout: user.username,
-    ...form
-  };
-
-  const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
-  localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
-
-  alert("Saved!");
-
-  // ✅ RESET FORM
-  setSelectedMatch("");
-  setSelectedTeam("");
-
-  setForm({
-    robotType: [],
-    focus: [],
-    focusOther: "",
-    failures: [],
-    failuresOther: "",
-    accuracy: 3,
-    shootingSpeed: 3,
-    intakeSpeed: 3,
-    auton: [],
-    autonOther: "",
-    climb: [],
-    awareness: "",
-    notes: ""
-  });
-};
-
-  const sectionStyle = {
-    marginBottom: "20px",
-    padding: "15px",
-    background: "#1e1e1e",
-    borderRadius: "12px"
-  };
-
-  const buttonStyle = (active) => ({
-    padding: "10px 12px",
-    margin: "5px",
-    borderRadius: "10px",
-    border: "none",
-    background: active ? "#4caf50" : "#333",
-    color: "white",
-    fontSize: "14px"
-  });
 
   return (
     <div style={{ padding: "10px", color: "white" }}>
-      <h2>Scout Match</h2>
+      <h2>Team Rankings</h2>
 
-      {/* MATCH */}
-      <div style={sectionStyle}>
-        <h3>Match</h3>
-        <select style={{ width: "100%", padding: "12px" }}
-          onChange={(e) => setSelectedMatch(e.target.value)}>
-          <option value="">Select Match</option>
-          {matches.map(m => (
-            <option key={m.key} value={m.key}>
-              Match {m.match_number}
-            </option>
+      {/* TEAM LIST */}
+      {!selectedTeam && teams.map(t => (
+        <div key={t.team}
+          onClick={() => setSelectedTeam(t)}
+          style={{
+            background: "#1e1e1e",
+            padding: "15px",
+            marginBottom: "10px",
+            borderRadius: "10px"
+          }}
+        >
+          <h3>Team {t.team.replace("frc", "")}</h3>
+          <p>Matches: {t.entries.length}</p>
+        </div>
+      ))}
+
+      {/* TEAM DETAIL */}
+      {selectedTeam && (
+        <div>
+          <button onClick={() => setSelectedTeam(null)}>Back</button>
+
+          <h2>Team {selectedTeam.team.replace("frc", "")}</h2>
+
+          {selectedTeam.entries.map((e, i) => (
+            <div key={i} style={{
+              background: "#1e1e1e",
+              padding: "12px",
+              marginBottom: "12px",
+              borderRadius: "10px"
+            }}>
+
+              <p><b>Scout:</b> {e.scout || "Unknown"}</p>
+              <p><b>Match:</b> {e.match}</p>
+
+              <hr style={{ opacity: 0.2 }} />
+
+              <p><b>Robot Type:</b> {formatField(e.robotType)}</p>
+
+              <p><b>Main Focus:</b> {formatField(e.focus, e.focusOther)}</p>
+
+              <p><b>Failures:</b> {formatField(e.failures, e.failuresOther)}</p>
+
+              <p><b>Auton:</b> {formatField(e.auton, e.autonOther)}</p>
+
+              <p><b>Climb:</b> {formatField(e.climb)}</p>
+
+              <p><b>Driver Awareness:</b> {e.awareness || "N/A"}</p>
+
+              <hr style={{ opacity: 0.2 }} />
+
+              <p><b>Accuracy:</b> {e.accuracy}</p>
+              <p><b>Shooting Speed:</b> {e.shootingSpeed}</p>
+              <p><b>Intake Speed:</b> {e.intakeSpeed}</p>
+
+              <hr style={{ opacity: 0.2 }} />
+
+              <p><b>Notes:</b> {e.notes || "None"}</p>
+
+            </div>
           ))}
-        </select>
-      </div>
-
-      {/* TEAM */}
-      <div style={sectionStyle}>
-        <h3>Team</h3>
-        <select style={{ width: "100%", padding: "12px" }}
-          onChange={(e) => setSelectedTeam(e.target.value)}>
-          <option value="">Select Team</option>
-          {teams.map(t => (
-            <option key={t} value={t}>{t.replace("frc", "")}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* AUTON */}
-      <div style={sectionStyle}>
-        <h3>Auton</h3>
-        {["No Auton / Not Working", "Shoot", "Collect Middle", "Collect Depot", "Climb", "Other"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.auton.includes(opt))}
-            onClick={() => toggleMulti("auton", opt)}>
-            {opt}
-          </button>
-        ))}
-        {form.auton.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, autonOther:e.target.value})}/>
-        )}
-      </div>
-
-      {/* ROBOT TYPE */}
-      <div style={sectionStyle}>
-        <h3>Robot Type</h3>
-        {["Kitbot", "Custom", "Not Sure"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.robotType.includes(opt))}
-            onClick={() => toggleMulti("robotType", opt)}>
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      {/* FOCUS */}
-      <div style={sectionStyle}>
-        <h3>Main Focus</h3>
-        {["Scoring", "Passing / Moving Balls", "Defense", "Other"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.focus.includes(opt))}
-            onClick={() => toggleMulti("focus", opt)}>
-            {opt}
-          </button>
-        ))}
-        {form.focus.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, focusOther:e.target.value})}/>
-        )}
-      </div>
-
-      {/* SLIDERS */}
-      <div style={sectionStyle}>
-        <h3>Accuracy: {form.accuracy}</h3>
-        <input type="range" min="1" max="5"
-          value={form.accuracy}
-          onChange={(e)=>setForm({...form, accuracy:e.target.value})}/>
-      </div>
-
-      <div style={sectionStyle}>
-        <h3>Shooting Speed: {form.shootingSpeed}</h3>
-        <input type="range" min="1" max="5"
-          value={form.shootingSpeed}
-          onChange={(e)=>setForm({...form, shootingSpeed:e.target.value})}/>
-      </div>
-
-      <div style={sectionStyle}>
-        <h3>Intake Speed: {form.intakeSpeed}</h3>
-        <input type="range" min="1" max="5"
-          value={form.intakeSpeed}
-          onChange={(e)=>setForm({...form, intakeSpeed:e.target.value})}/>
-      </div>
-
-      {/* CLIMB */}
-      <div style={sectionStyle}>
-        <h3>Climb</h3>
-        {["No", "L1", "L2", "L3", "Tried and Failed"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.climb.includes(opt))}
-            onClick={() => toggleMulti("climb", opt)}>
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      {/* FAILURES */}
-      <div style={sectionStyle}>
-        <h3>Failures</h3>
-        {["Lost Communication", "Lost Power", "Broken Intake", "Other"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.failures.includes(opt))}
-            onClick={() => toggleMulti("failures", opt)}>
-            {opt}
-          </button>
-        ))}
-        {form.failures.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, failuresOther:e.target.value})}/>
-        )}
-      </div>
-
-      {/* AWARENESS */}
-      <div style={sectionStyle}>
-        <h3>Did they look like they knew what they were doing?</h3>
-        {["Yes", "No", "Kind of Lost"].map(opt => (
-          <button key={opt}
-            style={buttonStyle(form.awareness === opt)}
-            onClick={() => setForm({...form, awareness: opt})}>
-            {opt}
-          </button>
-        ))}
-      </div>
-
-      {/* NOTES */}
-      <div style={sectionStyle}>
-        <h3>Additional Info</h3>
-        <textarea
-          style={{ width: "100%", height: "100px" }}
-          onChange={(e)=>setForm({...form, notes:e.target.value})}
-        />
-      </div>
-
-      {/* SAVE */}
-      <button
-        onClick={handleSubmit}
-        style={{
-          width: "100%",
-          padding: "20px",
-          background: "#2d8cf0",
-          border: "none",
-          borderRadius: "12px",
-          fontSize: "18px"
-        }}
-      >
-        Save
-      </button>
+        </div>
+      )}
     </div>
   );
 }
