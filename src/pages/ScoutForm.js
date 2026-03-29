@@ -87,10 +87,21 @@ useEffect(() => {
     const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
     localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
 
-    // 🔥 RESET EVERYTHING
-    setSelectedMatch("");
+    // 🔥 FIND NEXT MATCH
+    const currentIndex = matches.findIndex(m => m.key === selectedMatch);
+    const nextMatch = matches[currentIndex + 1];
+
+    // ✅ SET NEXT MATCH (or reset if none)
+    if (nextMatch) {
+      setSelectedMatch(nextMatch.key);
+    } else {
+      setSelectedMatch("");
+    }
+
+    // reset team (new match = new teams)
     setSelectedTeam("");
 
+    // RESET FORM
     setForm({
       robotType: [],
       focus: [],
@@ -107,8 +118,11 @@ useEffect(() => {
       notes: ""
     });
 
-    // 🔥 FORCE FULL UI RESET
-    setFormKey(prev => prev + 1);
+    // 🔥 SCROLL TO TOP
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
   const sectionStyle = {
