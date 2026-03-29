@@ -71,43 +71,17 @@ export default function ScoutForm() {
   };
 
   const handleSubmit = () => {
-
-    const eventKey = localStorage.getItem("selectedEvent");
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
     const entry = {
-      id: `${Date.now()}`,
-      event: eventKey,
       match: selectedMatch,
       team: selectedTeam,
-      scout: user.username,
-      ...form
+      ...form,
+      timestamp: Date.now()
     };
 
     const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
     localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
 
     alert("Saved!");
-
-    // RESET
-    setSelectedMatch("");
-    setSelectedTeam("");
-
-    setForm({
-      robotType: [],
-      focus: [],
-      focusOther: "",
-      failures: [],
-      failuresOther: "",
-      accuracy: 3,
-      shootingSpeed: 3,
-      intakeSpeed: 3,
-      auton: [],
-      autonOther: "",
-      climb: [],
-      awareness: "",
-      notes: ""
-    });
   };
 
   const sectionStyle = {
@@ -135,7 +109,6 @@ export default function ScoutForm() {
       <div style={sectionStyle}>
         <h3>Match</h3>
         <select style={{ width: "100%", padding: "12px" }}
-          value={selectedMatch}
           onChange={(e) => setSelectedMatch(e.target.value)}>
           <option value="">Select Match</option>
           {matches.map(m => (
@@ -150,7 +123,6 @@ export default function ScoutForm() {
       <div style={sectionStyle}>
         <h3>Team</h3>
         <select style={{ width: "100%", padding: "12px" }}
-          value={selectedTeam}
           onChange={(e) => setSelectedTeam(e.target.value)}>
           <option value="">Select Team</option>
           {teams.map(t => (
@@ -169,6 +141,106 @@ export default function ScoutForm() {
             {opt}
           </button>
         ))}
+        {form.auton.includes("Other") && (
+          <input placeholder="Other..." onChange={(e)=>setForm({...form, autonOther:e.target.value})}/>
+        )}
+      </div>
+
+      {/* ROBOT TYPE */}
+      <div style={sectionStyle}>
+        <h3>Robot Type</h3>
+        {["Kitbot", "Custom", "Not Sure"].map(opt => (
+          <button key={opt}
+            style={buttonStyle(form.robotType.includes(opt))}
+            onClick={() => toggleMulti("robotType", opt)}>
+            {opt}
+          </button>
+        ))}
+      </div>
+
+      {/* FOCUS */}
+      <div style={sectionStyle}>
+        <h3>Main Focus</h3>
+        {["Scoring", "Passing / Moving Balls", "Defense", "Other"].map(opt => (
+          <button key={opt}
+            style={buttonStyle(form.focus.includes(opt))}
+            onClick={() => toggleMulti("focus", opt)}>
+            {opt}
+          </button>
+        ))}
+        {form.focus.includes("Other") && (
+          <input placeholder="Other..." onChange={(e)=>setForm({...form, focusOther:e.target.value})}/>
+        )}
+      </div>
+
+      {/* SLIDERS */}
+      <div style={sectionStyle}>
+        <h3>Accuracy: {form.accuracy}</h3>
+        <input type="range" min="1" max="5"
+          value={form.accuracy}
+          onChange={(e)=>setForm({...form, accuracy:e.target.value})}/>
+      </div>
+
+      <div style={sectionStyle}>
+        <h3>Shooting Speed: {form.shootingSpeed}</h3>
+        <input type="range" min="1" max="5"
+          value={form.shootingSpeed}
+          onChange={(e)=>setForm({...form, shootingSpeed:e.target.value})}/>
+      </div>
+
+      <div style={sectionStyle}>
+        <h3>Intake Speed: {form.intakeSpeed}</h3>
+        <input type="range" min="1" max="5"
+          value={form.intakeSpeed}
+          onChange={(e)=>setForm({...form, intakeSpeed:e.target.value})}/>
+      </div>
+
+      {/* CLIMB */}
+      <div style={sectionStyle}>
+        <h3>Climb</h3>
+        {["No", "L1", "L2", "L3", "Tried and Failed"].map(opt => (
+          <button key={opt}
+            style={buttonStyle(form.climb.includes(opt))}
+            onClick={() => toggleMulti("climb", opt)}>
+            {opt}
+          </button>
+        ))}
+      </div>
+
+      {/* FAILURES */}
+      <div style={sectionStyle}>
+        <h3>Failures</h3>
+        {["Lost Communication", "Lost Power", "Broken Intake", "Other"].map(opt => (
+          <button key={opt}
+            style={buttonStyle(form.failures.includes(opt))}
+            onClick={() => toggleMulti("failures", opt)}>
+            {opt}
+          </button>
+        ))}
+        {form.failures.includes("Other") && (
+          <input placeholder="Other..." onChange={(e)=>setForm({...form, failuresOther:e.target.value})}/>
+        )}
+      </div>
+
+      {/* AWARENESS */}
+      <div style={sectionStyle}>
+        <h3>Did they look like they knew what they were doing?</h3>
+        {["Yes", "No", "Kind of Lost"].map(opt => (
+          <button key={opt}
+            style={buttonStyle(form.awareness === opt)}
+            onClick={() => setForm({...form, awareness: opt})}>
+            {opt}
+          </button>
+        ))}
+      </div>
+
+      {/* NOTES */}
+      <div style={sectionStyle}>
+        <h3>Additional Info</h3>
+        <textarea
+          style={{ width: "100%", height: "100px" }}
+          onChange={(e)=>setForm({...form, notes:e.target.value})}
+        />
       </div>
 
       {/* SAVE */}
