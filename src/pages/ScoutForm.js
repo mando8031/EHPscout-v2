@@ -5,7 +5,7 @@ export default function ScoutForm() {
 
   const [matches, setMatches] = useState([]);
   const [selectedMatch, setSelectedMatch] = useState("");
-  const [teams, setTeams] = useState([]);
+const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState("");
 
   const [form, setForm] = useState({
@@ -26,7 +26,7 @@ export default function ScoutForm() {
 
   const eventKey = localStorage.getItem("selectedEvent");
 
-  useEffect(() => {
+useEffect(() => {
     async function loadMatches() {
       if (!eventKey) return;
 
@@ -39,7 +39,7 @@ export default function ScoutForm() {
 
         setMatches(filtered);
       }
-    }
+}
 
     loadMatches();
   }, [eventKey]);
@@ -67,22 +67,48 @@ export default function ScoutForm() {
           ? prev[field].filter(v => v !== value)
           : [...prev[field], value]
       };
-    });
+});
   };
 
   const handleSubmit = () => {
-    const entry = {
-      match: selectedMatch,
-      team: selectedTeam,
-      ...form,
-      timestamp: Date.now()
-    };
 
-    const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
-    localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
+  const eventKey = localStorage.getItem("selectedEvent");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    alert("Saved!");
+  const entry = {
+    id: `${Date.now()}`,
+    event: eventKey,
+    match: selectedMatch,
+    team: selectedTeam,
+    scout: user.username,
+    ...form
   };
+
+  const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
+  localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
+
+  alert("Saved!");
+
+  // ✅ RESET FORM
+  setSelectedMatch("");
+  setSelectedTeam("");
+
+  setForm({
+    robotType: [],
+    focus: [],
+    focusOther: "",
+    failures: [],
+    failuresOther: "",
+    accuracy: 3,
+    shootingSpeed: 3,
+    intakeSpeed: 3,
+    auton: [],
+    autonOther: "",
+    climb: [],
+    awareness: "",
+    notes: ""
+  });
+};
 
   const sectionStyle = {
     marginBottom: "20px",
@@ -101,8 +127,8 @@ export default function ScoutForm() {
     fontSize: "14px"
   });
 
-  return (
-    <div style={{ padding: "10px", color: "white" }}>
+return (
+<div style={{ padding: "10px", color: "white" }}>
       <h2>Scout Match</h2>
 
       {/* MATCH */}
@@ -127,7 +153,7 @@ export default function ScoutForm() {
           <option value="">Select Team</option>
           {teams.map(t => (
             <option key={t} value={t}>{t.replace("frc", "")}</option>
-          ))}
+))}
         </select>
       </div>
 
@@ -257,6 +283,6 @@ export default function ScoutForm() {
       >
         Save
       </button>
-    </div>
-  );
+</div>
+);
 }
