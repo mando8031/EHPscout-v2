@@ -7,7 +7,7 @@ export default function ScoutForm() {
   const [selectedMatch, setSelectedMatch] = useState("");
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState("");
-  const [formKey, setFormKey] = useState(0);
+
   const [form, setForm] = useState({
     robotType: [],
     focus: [],
@@ -26,7 +26,7 @@ export default function ScoutForm() {
 
   const eventKey = localStorage.getItem("selectedEvent");
 
-useEffect(() => {
+  useEffect(() => {
     async function loadMatches() {
       if (!eventKey) return;
 
@@ -39,7 +39,7 @@ useEffect(() => {
 
         setMatches(filtered);
       }
-}
+    }
 
     loadMatches();
   }, [eventKey]);
@@ -67,12 +67,16 @@ useEffect(() => {
           ? prev[field].filter(v => v !== value)
           : [...prev[field], value]
       };
-});
+    });
   };
 
   const handleSubmit = () => {
 
-    const eventKey = localStorage.getItem("selectedEvent");
+    // ✅ VALIDATION
+    if (!selectedMatch) return alert("Select a match");
+    if (!selectedTeam) return alert("Select a team");
+    if (!form.awareness) return alert("Select driver awareness");
+
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     const entry = {
@@ -87,19 +91,13 @@ useEffect(() => {
     const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
     localStorage.setItem("scoutingData", JSON.stringify([...existing, entry]));
 
-    // 🔥 FIND NEXT MATCH
+    // 🔥 FIND NEXT MATCH SAFELY
     const currentIndex = matches.findIndex(m => m.key === selectedMatch);
-    const nextMatch = matches[currentIndex + 1];
 
-    // ✅ SET NEXT MATCH (or reset if none)
-    if (nextMatch) {
-      setSelectedMatch(nextMatch.key);
-    } else {
-      setSelectedMatch("");
+    let nextMatchKey = "";
+    if (currentIndex !== -1 && currentIndex < matches.length - 1) {
+      nextMatchKey = matches[currentIndex + 1].key;
     }
-
-    // reset team (new match = new teams)
-    setSelectedTeam("");
 
     // RESET FORM
     setForm({
@@ -118,11 +116,15 @@ useEffect(() => {
       notes: ""
     });
 
+    setSelectedTeam("");
+
+    // 🔥 IMPORTANT: delay ensures React updates properly
+    setTimeout(() => {
+      setSelectedMatch(nextMatchKey);
+    }, 0);
+
     // 🔥 SCROLL TO TOP
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const sectionStyle = {
@@ -142,15 +144,18 @@ useEffect(() => {
     fontSize: "14px"
   });
 
-return (
-  <div key={formKey} style={{ padding: "10px", color: "white" }}>
+  return (
+    <div style={{ padding: "10px", color: "white" }}>
       <h2>Scout Match</h2>
 
       {/* MATCH */}
       <div style={sectionStyle}>
         <h3>Match</h3>
-        <select style={{ width: "100%", padding: "12px" }}
-          onChange={(e) => setSelectedMatch(e.target.value)}>
+        <select
+          style={{ width: "100%", padding: "12px" }}
+          value={selectedMatch}
+          onChange={(e) => setSelectedMatch(e.target.value)}
+        >
           <option value="">Select Match</option>
           {matches.map(m => (
             <option key={m.key} value={m.key}>
@@ -163,12 +168,17 @@ return (
       {/* TEAM */}
       <div style={sectionStyle}>
         <h3>Team</h3>
-        <select style={{ width: "100%", padding: "12px" }}
-          onChange={(e) => setSelectedTeam(e.target.value)}>
+        <select
+          style={{ width: "100%", padding: "12px" }}
+          value={selectedTeam}
+          onChange={(e) => setSelectedTeam(e.target.value)}
+        >
           <option value="">Select Team</option>
           {teams.map(t => (
-            <option key={t} value={t}>{t.replace("frc", "")}</option>
-))}
+            <option key={t} value={t}>
+              {t.replace("frc", "")}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -183,7 +193,11 @@ return (
           </button>
         ))}
         {form.auton.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, autonOther:e.target.value})}/>
+          <input
+            placeholder="Other..."
+            value={form.autonOther}
+            onChange={(e)=>setForm({...form, autonOther:e.target.value})}
+          />
         )}
       </div>
 
@@ -210,7 +224,11 @@ return (
           </button>
         ))}
         {form.focus.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, focusOther:e.target.value})}/>
+          <input
+            placeholder="Other..."
+            value={form.focusOther}
+            onChange={(e)=>setForm({...form, focusOther:e.target.value})}
+          />
         )}
       </div>
 
@@ -259,7 +277,11 @@ return (
           </button>
         ))}
         {form.failures.includes("Other") && (
-          <input placeholder="Other..." onChange={(e)=>setForm({...form, failuresOther:e.target.value})}/>
+          <input
+            placeholder="Other..."
+            value={form.failuresOther}
+            onChange={(e)=>setForm({...form, failuresOther:e.target.value})}
+          />
         )}
       </div>
 
@@ -280,6 +302,7 @@ return (
         <h3>Additional Info</h3>
         <textarea
           style={{ width: "100%", height: "100px" }}
+          value={form.notes}
           onChange={(e)=>setForm({...form, notes:e.target.value})}
         />
       </div>
@@ -298,6 +321,6 @@ return (
       >
         Save
       </button>
-</div>
-);
+    </div>
+  );
 }
