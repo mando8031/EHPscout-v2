@@ -9,7 +9,27 @@ export default function Dashboard() {
 
   const selectedEvent = localStorage.getItem("selectedEvent");
 
-  // 🔥 LOAD DATA FUNCTION
+  // 🧠 SCORE CALCULATION
+  const calculateScore = (entry) => {
+    let score = 0;
+
+    score += Number(entry.accuracy || 0) * 3;
+    score += Number(entry.shootingSpeed || 0) * 2;
+    score += Number(entry.intakeSpeed || 0) * 2;
+
+    // awareness bonus
+    if (entry.awareness === "Yes") score += 3;
+    if (entry.awareness === "Kind of Lost") score += 1;
+
+    // climb bonus
+    if (entry.climb?.includes("L3")) score += 5;
+    else if (entry.climb?.includes("L2")) score += 3;
+    else if (entry.climb?.includes("L1")) score += 1;
+
+    return score;
+  };
+
+  // 🔥 LOAD DATA
   const loadData = () => {
     if (!selectedEvent) {
       setTeams([]);
@@ -32,36 +52,44 @@ export default function Dashboard() {
       grouped[entry.team].push(entry);
     });
 
-    const ranked = Object.keys(grouped).map(team => ({
-      team,
-      entries: grouped[team]
-    }));
+    // 🧠 CALCULATE TEAM SCORES
+    const ranked = Object.keys(grouped).map(team => {
+
+      const entries = grouped[team];
+
+      const scores = entries.map(e => calculateScore(e));
+
+      const avgScore =
+        scores.reduce((a, b) => a + b, 0) / scores.length;
+
+      return {
+        team,
+        entries,
+        avgScore: avgScore.toFixed(1)
+      };
+    });
+
+    // 🏆 SORT BEST → WORST
+    ranked.sort((a, b) => b.avgScore - a.avgScore);
 
     setTeams(ranked);
   };
 
-  // 🔁 RUN ON LOAD + WHEN EVENT CHANGES
   useEffect(() => {
     loadData();
   }, [selectedEvent]);
 
-  // 🔁 ALSO REFRESH WHEN PAGE FOCUSED (VERY IMPORTANT)
   useEffect(() => {
     const handleFocus = () => loadData();
     window.addEventListener("focus", handleFocus);
-
     return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   // 🔴 NO EVENT
-  if (!selectedEvent) {
-    return <NoEvent />;
-  }
+  if (!selectedEvent) return <NoEvent />;
 
   // 🔴 NO DATA
-  if (teams.length === 0) {
-    return <NoData />;
-  }
+  if (teams.length === 0) return <NoData />;
 
   // 🧠 FORMATTER
   const formatField = (arr, other) => {
@@ -81,17 +109,20 @@ export default function Dashboard() {
       <h2>Team Rankings</h2>
 
       {/* TEAM LIST */}
-      {!selectedTeam && teams.map(t => (
+      {!selectedTeam && teams.map((t, index) => (
         <div key={t.team}
           onClick={() => setSelectedTeam(t)}
           style={{
-            background: "#1e1e1e",
+            background: index === 0 ? "#2e7d32" : "#1e1e1e",
             padding: "15px",
             marginBottom: "10px",
             borderRadius: "10px"
           }}
         >
-          <h3>Team {t.team.replace("frc", "")}</h3>
+          <h3>
+            #{index + 1} — Team {t.team.replace("frc", "")}
+          </h3>
+          <p>Score: {t.avgScore}</p>
           <p>Matches: {t.entries.length}</p>
         </div>
       ))}
@@ -101,7 +132,9 @@ export default function Dashboard() {
         <div>
           <button onClick={() => setSelectedTeam(null)}>Back</button>
 
-          <h2>Team {selectedTeam.team.replace("frc", "")}</h2>
+          <h2>
+            Team {selectedTeam.team.replace("frc", "")} (Score: {selectedTeam.avgScore})
+          </h2>
 
           {selectedTeam.entries.map((e, i) => (
             <div key={i} style={{
