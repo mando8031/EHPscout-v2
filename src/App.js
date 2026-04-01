@@ -8,6 +8,7 @@ import ScoutForm from "./pages/ScoutForm";
 import Dashboard from "./pages/Dashboard";
 import DataSync from "./pages/DataSync";
 import NoEvent from "./pages/NoEvent";
+import AccountSettings from "./pages/AccountSettings"; // ✅ NEW
 
 import { getCurrentUser } from "./utils/localAuth";
 import { getTeams } from "./utils/localTeams";
@@ -21,7 +22,7 @@ function App() {
     localStorage.getItem("selectedEvent")
   );
 
-  // 🔥 LISTEN FOR CHANGES
+  // 🔥 LISTEN FOR EVENT CHANGES
   useEffect(() => {
     const interval = setInterval(() => {
       const current = localStorage.getItem("selectedEvent");
@@ -48,6 +49,7 @@ function App() {
             <Link style={{ color: "white" }} to="/scout">Scout</Link>
             <Link style={{ color: "white" }} to="/dashboard">Dashboard</Link>
             <Link style={{ color: "white" }} to="/sync">Sync</Link>
+            <Link style={{ color: "white" }} to="/settings">Settings</Link> {/* ✅ NEW */}
           </>
         )}
       </nav>
@@ -110,7 +112,15 @@ function App() {
           }
         />
 
-        {/* TEAM (optional) */}
+        {/* SETTINGS ✅ NEW */}
+        <Route
+          path="/settings"
+          element={
+            user ? <AccountSettings /> : <Navigate to="/" />
+          }
+        />
+
+        {/* TEAM */}
         <Route
           path="/create-team"
           element={
