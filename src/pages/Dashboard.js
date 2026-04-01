@@ -9,7 +9,7 @@ export default function Dashboard() {
 
   const selectedEvent = localStorage.getItem("selectedEvent");
 
-  // 🧠 LOAD SETTINGS
+  // 🧠 LOAD SETTINGS (with safe defaults)
   const getSettings = () => {
     return JSON.parse(localStorage.getItem("scoringSettings")) || {
       accuracy: 0.3,
@@ -18,37 +18,121 @@ export default function Dashboard() {
       auton: 0.1,
       climb: 0.1,
       awareness: 0.1,
-      failurePenalty: 0.2
+      focus: 0.1,
+      robotType: 0.05,
+      failurePenalty: 0.2,
+
+      autonShoot: 1,
+      autonCollectMiddle: 0.6,
+      autonCollectDepot: 0.5,
+      autonClimb: 0.8,
+
+      focusScoring: 1,
+      focusPassing: 0.6,
+      focusDefense: 0.8,
+
+      failureLostComm: 1,
+      failureLostPower: 1,
+      failureBrokenIntake: 0.6
     };
   };
 
   // 🧠 SCORE CALCULATION (0 → 1)
   const calculateScore = (entry) => {
-    const settings = getSettings();
+    const s = getSettings();
 
     let score = 0;
 
     // 🎯 sliders (normalize 1–5 → 0–1)
-    score += ((Number(entry.accuracy) - 1) / 4) * settings.accuracy;
-    score += ((Number(entry.shootingSpeed) - 1) / 4) * settings.shootingSpeed;
-    score += ((Number(entry.intakeSpeed) - 1) / 4) * settings.intakeSpeed;
+    score += ((Number(entry.accuracy) - 1) / 4) * s.accuracy;
+    score += ((Number(entry.shootingSpeed) - 1) / 4) * s.shootingSpeed;
+    score += ((Number(entry.intakeSpeed) - 1) / 4) * s.intakeSpeed;
 
     // 🧠 awareness
-    if (entry.awareness === "Yes") score += settings.awareness;
-    if (entry.awareness === "Kind of Lost") score += settings.awareness * 0.5;
+    if (entry.awareness === "Yes") score += s.awareness;
+    if (entry.awareness === "Kind of Lost") score += s.awareness * 0.5;
 
     // 🧗 climb
-    if (entry.climb?.includes("L3")) score += settings.climb;
-    else if (entry.climb?.includes("L2")) score += settings.climb * 0.7;
-    else if (entry.climb?.includes("L1")) score += settings.climb * 0.4;
+    if (entry.climb?.includes("L3")) score += s.climb;
+    else if (entry.climb?.includes("L2")) score += s.climb * 0.7;
+    else if (entry.climb?.includes("L1")) score += s.climb * 0.4;
 
-    // 🤖 auton (any activity = credit)
-    if (entry.auton?.length > 0) score += settings.auton;
+    // 🤖 AUTON (FULLY CUSTOM)
+    let autonScore = 0;
 
-    // ❌ failures penalty
-    if (entry.failures?.length > 0) {
-      score -= settings.failurePenalty * (entry.failures.length / 3);
+    if (entry.auton?.includes("Shoot")) {
+      autonScore += s.autonShoot;
     }
+    if (entry.auton?.includes("Collect Middle")) {
+      autonScore += s.autonCollectMiddle;
+    }
+    if (entry.auton?.includes("Collect Depot")) {
+      autonScore += s.autonCollectDepot;
+    }
+    if (entry.auton?.includes("Climb")) {
+      autonScore += s.autonClimb;
+    }
+
+    if (entry.auton?.includes("No Auton / Not Working")) {
+      autonScore = 0;
+    }
+
+    const maxAuton =
+      s.autonShoot +
+      s.autonCollectMiddle +
+      s.autonCollectDepot +
+      s.autonClimb;
+
+    if (maxAuton > 0) autonScore /= maxAuton;
+
+    score += autonScore * s.auton;
+
+    // 🎯 FOCUS (FULLY CUSTOM)
+    let focusScore = 0;
+
+    if (entry.focus?.includes("Scoring")) {
+      focusScore += s.focusScoring;
+    }
+    if (entry.focus?.includes("Passing / Moving Balls")) {
+      focusScore += s.focusPassing;
+    }
+    if (entry.focus?.includes("Defense")) {
+      focusScore += s.focusDefense;
+    }
+
+    const maxFocus =
+      s.focusScoring +
+      s.focusPassing +
+      s.focusDefense;
+
+    if (maxFocus > 0) focusScore /= maxFocus;
+
+    score += focusScore * s.focus;
+
+    // 🤖 ROBOT TYPE
+    if (entry.robotType?.includes("Custom")) {
+      score += s.robotType;
+    }
+    // Kitbot = 0 automatically
+
+    // ❌ FAILURES (CUSTOM PENALTIES)
+    let penalty = 0;
+
+    if (entry.failures?.includes("Lost Communication")) {
+      penalty += s.failureLostComm;
+    }
+    if (entry.failures?.includes("Lost Power")) {
+      penalty += s.failureLostPower;
+    }
+    if (entry.failures?.includes("Broken Intake")) {
+      penalty += s.failureBrokenIntake;
+    }
+
+    if (entry.failures?.includes("Other")) {
+      penalty += 0.5; // default small penalty
+    }
+
+    score -= penalty * s.failurePenalty;
 
     // 🔒 clamp 0–1
     return Math.max(0, Math.min(1, score));
@@ -90,7 +174,7 @@ export default function Dashboard() {
       return {
         team,
         entries,
-        avgScore: avgScore
+        avgScore
       };
     });
 
@@ -123,7 +207,9 @@ export default function Dashboard() {
     let values = [...arr];
 
     if (arr.includes("Other") && other) {
-      values = values.map(v => v === "Other" ? `Other: ${other}` : v);
+      values = values.map(v =>
+        v === "Other" ? `Other: ${other}` : v
+      );
     }
 
     return values.join(", ");
