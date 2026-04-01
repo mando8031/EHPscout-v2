@@ -9,14 +9,34 @@ export default function AccountSettings() {
     auton: 0.1,
     climb: 0.1,
     awareness: 0.1,
-    failurePenalty: 0.2
+
+    // 🔥 NEW
+    focus: 0.1,
+    robotType: 0.05,
+    failurePenalty: 0.2,
+
+    // AUTON BREAKDOWN
+    autonShoot: 1,
+    autonCollectMiddle: 0.6,
+    autonCollectDepot: 0.5,
+    autonClimb: 0.8,
+
+    // 🔥 FOCUS BREAKDOWN
+    focusScoring: 1,
+    focusPassing: 0.6,
+    focusDefense: 0.8,
+
+    // 🔥 FAILURE BREAKDOWN
+    failureLostComm: 1,
+    failureLostPower: 1,
+    failureBrokenIntake: 0.6
   };
 
   const [settings, setSettings] = useState(defaultSettings);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("scoringSettings"));
-    if (saved) setSettings(saved);
+    if (saved) setSettings({ ...defaultSettings, ...saved });
   }, []);
 
   const handleChange = (field, value) => {
@@ -26,27 +46,9 @@ export default function AccountSettings() {
     }));
   };
 
-  const totalWeight =
-    settings.accuracy +
-    settings.shootingSpeed +
-    settings.intakeSpeed +
-    settings.auton +
-    settings.climb +
-    settings.awareness;
-
   const saveSettings = () => {
-
-    if (totalWeight === 0) {
-      return alert("Weights cannot all be zero");
-    }
-
     localStorage.setItem("scoringSettings", JSON.stringify(settings));
     alert("Settings saved!");
-  };
-
-  const resetDefaults = () => {
-    setSettings(defaultSettings);
-    localStorage.setItem("scoringSettings", JSON.stringify(defaultSettings));
   };
 
   const logout = () => {
@@ -55,12 +57,12 @@ export default function AccountSettings() {
   };
 
   const slider = (label, field) => (
-    <div style={{ marginBottom: "15px" }}>
+    <div style={{ marginBottom: "12px" }}>
       <p>{label}: {(settings[field] * 100).toFixed(0)}%</p>
       <input
         type="range"
         min="0"
-        max="1"
+        max="2"
         step="0.05"
         value={settings[field]}
         onChange={(e) => handleChange(field, e.target.value)}
@@ -71,75 +73,69 @@ export default function AccountSettings() {
 
   return (
     <div style={{ padding: "15px", color: "white" }}>
-
       <h2>Account Settings</h2>
 
-      {/* SCORING */}
-      <div style={{
-        background: "#1e1e1e",
-        padding: "15px",
-        borderRadius: "12px",
-        marginBottom: "20px"
-      }}>
-        <h3>Scoring Weights</h3>
-
+      {/* MAIN WEIGHTS */}
+      <div style={box}>
+        <h3>Main Weights</h3>
         {slider("Accuracy", "accuracy")}
         {slider("Shooting Speed", "shootingSpeed")}
         {slider("Intake Speed", "intakeSpeed")}
         {slider("Auton", "auton")}
         {slider("Climb", "climb")}
         {slider("Awareness", "awareness")}
-
-        {/* 🔥 TOTAL DISPLAY */}
-        <div style={{
-          marginTop: "15px",
-          padding: "10px",
-          borderRadius: "8px",
-          background: totalWeight > 1 ? "#8b0000" : "#333"
-        }}>
-          <b>Total Weight: {(totalWeight * 100).toFixed(0)}%</b>
-          <p style={{ fontSize: "12px", opacity: 0.7 }}>
-            Ideally this should be ~100%
-          </p>
-        </div>
-
-        {/* FAILURE */}
-        <h3 style={{ marginTop: "20px" }}>Failure Penalty</h3>
-        {slider("Penalty Strength", "failurePenalty")}
-
-        <button onClick={saveSettings} style={btnStyle}>
-          Save Settings
-        </button>
-
-        <button onClick={resetDefaults} style={btnStyle}>
-          Reset Defaults
-        </button>
+        {slider("Focus", "focus")}
+        {slider("Robot Type", "robotType")}
       </div>
 
-      {/* ACCOUNT */}
-      <div style={{
-        background: "#1e1e1e",
-        padding: "15px",
-        borderRadius: "12px"
-      }}>
-        <h3>Account</h3>
-
-        <button onClick={logout} style={{ ...btnStyle, background: "#c62828" }}>
-          Log Out
-        </button>
+      {/* AUTON */}
+      <div style={box}>
+        <h3>Auton Breakdown</h3>
+        {slider("Shoot", "autonShoot")}
+        {slider("Collect Middle", "autonCollectMiddle")}
+        {slider("Collect Depot", "autonCollectDepot")}
+        {slider("Climb", "autonClimb")}
       </div>
 
+      {/* FOCUS */}
+      <div style={box}>
+        <h3>Focus Breakdown</h3>
+        {slider("Scoring", "focusScoring")}
+        {slider("Passing", "focusPassing")}
+        {slider("Defense", "focusDefense")}
+      </div>
+
+      {/* FAILURES */}
+      <div style={box}>
+        <h3>Failure Penalties</h3>
+        {slider("Lost Communication", "failureLostComm")}
+        {slider("Lost Power", "failureLostPower")}
+        {slider("Broken Intake", "failureBrokenIntake")}
+        {slider("Overall Penalty Strength", "failurePenalty")}
+      </div>
+
+      <button onClick={saveSettings} style={btn}>Save</button>
+
+      <button onClick={logout} style={{ ...btn, background: "#c62828" }}>
+        Logout
+      </button>
     </div>
   );
 }
 
-const btnStyle = {
+const box = {
+  background: "#1e1e1e",
+  padding: "15px",
+  borderRadius: "12px",
+  marginBottom: "15px"
+};
+
+const btn = {
   width: "100%",
   padding: "12px",
   marginTop: "10px",
   border: "none",
   borderRadius: "10px",
   background: "#2d8cf0",
-  color: "white",
-  fontSize: "16px"
+  color: "white"
 };
