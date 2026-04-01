@@ -72,28 +72,45 @@ export default function ScoutForm() {
 
   const handleSubmit = () => {
 
-    // ✅ BASIC REQUIRED
+    // ✅ REQUIRED: match + team
     if (!selectedMatch) return alert("Select a match");
     if (!selectedTeam) return alert("Select a team");
+
+    // ✅ REQUIRED: awareness
     if (!form.awareness) return alert("Select driver awareness");
 
-    // ✅ CHECK IF ANY REAL DATA WAS ENTERED
-    const hasRealData =
-      form.robotType.length > 0 ||
-      form.focus.length > 0 ||
-      form.auton.length > 0 ||
-      form.failures.length > 0 ||
-      form.climb.length > 0 ||
-      form.notes.trim() !== "" ||
-      form.focusOther.trim() !== "" ||
-      form.failuresOther.trim() !== "" ||
-      form.autonOther.trim() !== "" ||
-      Number(form.accuracy) !== 3 ||
-      Number(form.shootingSpeed) !== 3 ||
-      Number(form.intakeSpeed) !== 3;
+    // ✅ ROBOT TYPE
+    if (form.robotType.length === 0) {
+      return alert("Select robot type");
+    }
 
-    if (!hasRealData) {
-      return alert("Enter at least some scouting data");
+    // ✅ FOCUS
+    if (
+      form.focus.length === 0 &&
+      form.focusOther.trim() === ""
+    ) {
+      return alert("Fill out main focus");
+    }
+
+    // ✅ FAILURES
+    if (
+      form.failures.length === 0 &&
+      form.failuresOther.trim() === ""
+    ) {
+      return alert("Fill out failures");
+    }
+
+    // ✅ AUTON
+    if (
+      form.auton.length === 0 &&
+      form.autonOther.trim() === ""
+    ) {
+      return alert("Fill out auton");
+    }
+
+    // ✅ CLIMB
+    if (form.climb.length === 0) {
+      return alert("Select climb");
     }
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
