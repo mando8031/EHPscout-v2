@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 export default function AccountSettings() {
 
   const defaultSettings = {
-    accuracy: 0.18,
-    shootingSpeed: 0.18,
-    intakeSpeed: 0.18,
+    accuracy: 0.1818,
+    shootingSpeed: 0.1818,
+    intakeSpeed: 0.1818,
     auton: 0.1,
     climb: 0.05,
     awareness: 0.1,
@@ -18,18 +18,72 @@ export default function AccountSettings() {
     autonCollectDepot: 0.25,
     autonClimb: 0.25,
 
-    focusScoring: 0.33,
-    focusPassing: 0.33,
-    focusDefense: 0.33,
+    focusScoring: 0.3333,
+    focusPassing: 0.3333,
+    focusDefense: 0.3333,
 
-    failureLostComm: 0.33,
-    failureLostPower: 0.33,
-    failureBrokenIntake: 0.33
+    failureLostComm: 0.3333,
+    failureLostPower: 0.3333,
+    failureBrokenIntake: 0.3333
+  };
+
+  const presetMap = {
+    balanced: defaultSettings,
+
+    offense: {
+      accuracy: 0.15,
+      shootingSpeed: 0.2,
+      intakeSpeed: 0.2,
+      auton: 0.1,
+      climb: 0.05,
+      awareness: 0.1,
+      focus: 0.1,
+      robotType: 0.1,
+      failurePenalty: 0.1,
+
+      autonShoot: 0.4,
+      autonCollectMiddle: 0.2,
+      autonCollectDepot: 0.2,
+      autonClimb: 0.2,
+
+      focusScoring: 0.71,
+      focusPassing: 0.14,
+      focusDefense: 0.14,
+
+      failureLostComm: 0.5,
+      failureLostPower: 0.25,
+      failureBrokenIntake: 0.25
+    },
+
+    defense: {
+      accuracy: 0.1,
+      shootingSpeed: 0.1,
+      intakeSpeed: 0.1,
+      auton: 0.05,
+      climb: 0.2,
+      awareness: 0.2,
+      focus: 0.2,
+      robotType: 0.05,
+      failurePenalty: 0.2,
+
+      autonShoot: 0.15,
+      autonCollectMiddle: 0.15,
+      autonCollectDepot: 0.15,
+      autonClimb: 0.55,
+
+      focusScoring: 0.1,
+      focusPassing: 0.2,
+      focusDefense: 0.7,
+
+      failureLostComm: 0.5,
+      failureLostPower: 0.4,
+      failureBrokenIntake: 0.1
+    }
   };
 
   const [settings, setSettings] = useState(defaultSettings);
-  const [presetName, setPresetName] = useState("");
   const [presets, setPresets] = useState({});
+  const [presetName, setPresetName] = useState("");
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [teamInput, setTeamInput] = useState("");
 
@@ -48,32 +102,21 @@ export default function AccountSettings() {
   }, [settings]);
 
   const handleChange = (field, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [field]: Number(value)
-    }));
+    setSettings(prev => ({ ...prev, [field]: Number(value) }));
   };
 
-  // NORMALIZE
   const normalizeGroup = (fields) => {
-    let total = fields.reduce((sum, f) => sum + settings[f], 0);
-    if (total === 0) total = 1;
-
+    let total = fields.reduce((s, f) => s + settings[f], 0) || 1;
     const updated = { ...settings };
-    fields.forEach(f => {
-      updated[f] = settings[f] / total;
-    });
-
+    fields.forEach(f => updated[f] = settings[f] / total);
     setSettings(updated);
   };
 
-  // CALIBRATION
+  // 🔥 FULL CALIBRATION
   const calibrate = () => {
-    const selectedEvent = localStorage.getItem("selectedEvent");
-    if (!selectedEvent) return alert("Select event");
-
+    const event = localStorage.getItem("selectedEvent");
     const data = JSON.parse(localStorage.getItem("scoutingData") || "[]")
-      .filter(d => d.event === selectedEvent);
+      .filter(d => d.event === event);
 
     if (!data.length) return alert("No data");
 
@@ -181,14 +224,8 @@ export default function AccountSettings() {
     alert("Calibration complete");
   };
 
-  // PRESETS
-  const applyPreset = (preset) => {
-    setSettings(prev => ({ ...prev, ...preset }));
-  };
-
   const savePreset = () => {
-    if (!presetName) return alert("Name it");
-
+    if (!presetName) return;
     const updated = { ...presets, [presetName]: settings };
     setPresets(updated);
     localStorage.setItem("scoringPresets", JSON.stringify(updated));
@@ -197,15 +234,13 @@ export default function AccountSettings() {
 
   const loadPreset = (name) => setSettings(presets[name]);
 
-  // IMPORT / EXPORT
   const exportSettings = () => {
     navigator.clipboard.writeText(JSON.stringify(settings));
-    alert("Copied!");
+    alert("Copied");
   };
 
   const importSettings = () => {
     const data = prompt("Paste JSON");
-    if (!data) return;
     try { setSettings(JSON.parse(data)); }
     catch { alert("Invalid"); }
   };
@@ -218,11 +253,11 @@ export default function AccountSettings() {
   const total = (fields) =>
     fields.reduce((s, f) => s + settings[f], 0);
 
-  const totalDisplay = (val) => (
+  const totalDisplay = (value) => (
     <p style={{
-      color: Math.abs(val - 1) > 0.01 ? "red" : "lime"
+      color: Math.abs(value - 1) > 0.01 ? "red" : "lime"
     }}>
-      Total: {(val * 100).toFixed(0)}%
+      Total: {(value * 100).toFixed(0)}%
     </p>
   );
 
@@ -252,23 +287,18 @@ export default function AccountSettings() {
       <div style={box}>
         <h3>Calibration</h3>
 
-        <input
-          value={teamInput}
+        <input value={teamInput}
           onChange={(e)=>setTeamInput(e.target.value)}
-          placeholder="frc####"
-        />
+          placeholder="frc####" />
 
         <button onClick={()=>{
-          if(!teamInput) return;
-          setSelectedTeams([...selectedTeams, teamInput]);
-          setTeamInput("");
+          if(teamInput){
+            setSelectedTeams([...selectedTeams, teamInput]);
+            setTeamInput("");
+          }
         }}>Add Team</button>
 
-        <div>
-          {selectedTeams.map(t=>(
-            <span key={t} style={{margin:"5px"}}>{t}</span>
-          ))}
-        </div>
+        <div>{selectedTeams.map(t=><span key={t}>{t} </span>)}</div>
 
         <button onClick={calibrate}>Run Calibration</button>
       </div>
@@ -276,19 +306,17 @@ export default function AccountSettings() {
       {/* PRESETS */}
       <div style={box}>
         <h3>Presets</h3>
-        <button onClick={()=>applyPreset(defaultSettings)}>Balanced</button>
+        <button onClick={()=>setSettings(presetMap.balanced)}>Balanced</button>
+        <button onClick={()=>setSettings(presetMap.offense)}>Offense</button>
+        <button onClick={()=>setSettings(presetMap.defense)}>Defense</button>
 
-        <input
-          placeholder="Preset name"
-          value={presetName}
+        <input value={presetName}
           onChange={(e)=>setPresetName(e.target.value)}
-        />
+          placeholder="Save preset" />
         <button onClick={savePreset}>Save</button>
 
         {Object.keys(presets).map(p=>(
-          <button key={p} onClick={()=>loadPreset(p)}>
-            {p}
-          </button>
+          <button key={p} onClick={()=>loadPreset(p)}>{p}</button>
         ))}
       </div>
 
@@ -312,6 +340,56 @@ export default function AccountSettings() {
         <button onClick={()=>normalizeGroup([
           "accuracy","shootingSpeed","intakeSpeed",
           "auton","climb","awareness","focus","robotType"
+        ])}>Normalize</button>
+      </div>
+
+      {/* AUTON */}
+      <div style={box}>
+        <h3>Auton</h3>
+        {totalDisplay(total([
+          "autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"
+        ]))}
+
+        {slider("Shoot","autonShoot",false)}
+        {slider("Middle","autonCollectMiddle",false)}
+        {slider("Depot","autonCollectDepot",false)}
+        {slider("Climb","autonClimb",false)}
+
+        <button onClick={()=>normalizeGroup([
+          "autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"
+        ])}>Normalize</button>
+      </div>
+
+      {/* FOCUS */}
+      <div style={box}>
+        <h3>Focus</h3>
+        {totalDisplay(total([
+          "focusScoring","focusPassing","focusDefense"
+        ]))}
+
+        {slider("Scoring","focusScoring",false)}
+        {slider("Passing","focusPassing",false)}
+        {slider("Defense","focusDefense",false)}
+
+        <button onClick={()=>normalizeGroup([
+          "focusScoring","focusPassing","focusDefense"
+        ])}>Normalize</button>
+      </div>
+
+      {/* FAILURES */}
+      <div style={box}>
+        <h3>Failures</h3>
+        {totalDisplay(total([
+          "failureLostComm","failureLostPower","failureBrokenIntake"
+        ]))}
+
+        {slider("Lost Comm","failureLostComm",false)}
+        {slider("Lost Power","failureLostPower",false)}
+        {slider("Broken Intake","failureBrokenIntake",false)}
+        {slider("Penalty Strength","failurePenalty")}
+
+        <button onClick={()=>normalizeGroup([
+          "failureLostComm","failureLostPower","failureBrokenIntake"
         ])}>Normalize</button>
       </div>
 
