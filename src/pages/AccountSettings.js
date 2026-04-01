@@ -63,39 +63,87 @@ export default function AccountSettings() {
   // 🔥 PRESETS
   const applyPreset = (type) => {
     const presetMap = {
+
       balanced: {
-        accuracy: 0.2,
-        shootingSpeed: 0.15,
-        intakeSpeed: 0.15,
-        auton: 0.15,
-        climb: 0.15,
-        awareness: 0.1,
-        focus: 0.07,
-        robotType: 0.03
-      },
-      offense: {
-        accuracy: 0.3,
-        shootingSpeed: 0.25,
-        intakeSpeed: 0.15,
-        auton: 0.15,
+        accuracy: 0.18181818181818182,
+        shootingSpeed: 0.18181818181818182,
+        intakeSpeed: 0.18181818181818182,
+        auton: 0.1,
         climb: 0.05,
-        awareness: 0.05,
-        focus: 0.03,
-        robotType: 0.02
+        awareness: 0.1,
+        focus: 0.1,
+        robotType: 0.1,
+        failurePenalty: 0.1,
+
+        autonShoot: 0.25,
+        autonCollectMiddle: 0.25,
+        autonCollectDepot: 0.25,
+        autonClimb: 0.25,
+
+        focusScoring: 0.3333333333333333,
+        focusPassing: 0.3333333333333333,
+        focusDefense: 0.3333333333333333,
+
+        failureLostComm: 0.3333333333333333,
+        failureLostPower: 0.3333333333333333,
+        failureBrokenIntake: 0.3333333333333333
       },
+
+      offense: {
+        accuracy: 0.15,
+        shootingSpeed: 0.2,
+        intakeSpeed: 0.2,
+        auton: 0.1,
+        climb: 0.05,
+        awareness: 0.1,
+        focus: 0.1,
+        robotType: 0.1,
+        failurePenalty: 0.1,
+
+        autonShoot: 0.4,
+        autonCollectMiddle: 0.2,
+        autonCollectDepot: 0.2,
+        autonClimb: 0.2,
+
+        focusScoring: 0.7142857142857143,
+        focusPassing: 0.14285714285714285,
+        focusDefense: 0.14285714285714285,
+
+        failureLostComm: 0.5,
+        failureLostPower: 0.25,
+        failureBrokenIntake: 0.25
+      },
+
       defense: {
         accuracy: 0.1,
         shootingSpeed: 0.1,
-        intakeSpeed: 0.2,
-        auton: 0.1,
+        intakeSpeed: 0.1,
+        auton: 0.05,
         climb: 0.2,
         awareness: 0.2,
-        focus: 0.1,
-        robotType: 0.1
+        focus: 0.2,
+        robotType: 0.05,
+        failurePenalty: 0.2,
+
+        autonShoot: 0.15,
+        autonCollectMiddle: 0.15,
+        autonCollectDepot: 0.15,
+        autonClimb: 0.55,
+
+        focusScoring: 0.1,
+        focusPassing: 0.2,
+        focusDefense: 0.7,
+
+        failureLostComm: 0.5,
+        failureLostPower: 0.4,
+        failureBrokenIntake: 0.1
       }
     };
 
-    setSettings(prev => ({ ...prev, ...presetMap[type] }));
+    setSettings(prev => ({
+      ...prev,
+      ...presetMap[type]
+    }));
   };
 
   // 🔥 SAVE PRESET
