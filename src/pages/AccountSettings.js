@@ -28,10 +28,14 @@ export default function AccountSettings() {
   };
 
   const [settings, setSettings] = useState(defaultSettings);
+  const [presetName, setPresetName] = useState("");
+  const [presets, setPresets] = useState({});
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("scoringSettings"));
+    const savedPresets = JSON.parse(localStorage.getItem("scoringPresets")) || {};
     if (saved) setSettings({ ...defaultSettings, ...saved });
+    setPresets(savedPresets);
   }, []);
 
   const handleChange = (field, value) => {
@@ -41,9 +45,113 @@ export default function AccountSettings() {
     }));
   };
 
+  // 🔥 LOCK TO 100%
+  const normalizeMain = () => {
+    const total =
+      settings.accuracy +
+      settings.shootingSpeed +
+      settings.intakeSpeed +
+      settings.auton +
+      settings.climb +
+      settings.awareness +
+      settings.focus +
+      settings.robotType;
+
+    if (total === 0) return;
+
+    const normalized = {
+      ...settings,
+      accuracy: settings.accuracy / total,
+      shootingSpeed: settings.shootingSpeed / total,
+      intakeSpeed: settings.intakeSpeed / total,
+      auton: settings.auton / total,
+      climb: settings.climb / total,
+      awareness: settings.awareness / total,
+      focus: settings.focus / total,
+      robotType: settings.robotType / total
+    };
+
+    setSettings(normalized);
+  };
+
+  // 🔥 PRESETS
+  const applyPreset = (type) => {
+    const presetMap = {
+      balanced: {
+        accuracy: 0.2,
+        shootingSpeed: 0.15,
+        intakeSpeed: 0.15,
+        auton: 0.15,
+        climb: 0.15,
+        awareness: 0.1,
+        focus: 0.07,
+        robotType: 0.03
+      },
+      offense: {
+        accuracy: 0.3,
+        shootingSpeed: 0.25,
+        intakeSpeed: 0.15,
+        auton: 0.15,
+        climb: 0.05,
+        awareness: 0.05,
+        focus: 0.03,
+        robotType: 0.02
+      },
+      defense: {
+        accuracy: 0.1,
+        shootingSpeed: 0.1,
+        intakeSpeed: 0.2,
+        auton: 0.1,
+        climb: 0.2,
+        awareness: 0.2,
+        focus: 0.1,
+        robotType: 0.1
+      }
+    };
+
+    setSettings(prev => ({ ...prev, ...presetMap[type] }));
+  };
+
+  // 🔥 SAVE CUSTOM PRESET
+  const savePreset = () => {
+    if (!presetName) return alert("Enter a preset name");
+
+    const updated = {
+      ...presets,
+      [presetName]: settings
+    };
+
+    setPresets(updated);
+    localStorage.setItem("scoringPresets", JSON.stringify(updated));
+    setPresetName("");
+  };
+
+  const loadPreset = (name) => {
+    setSettings(presets[name]);
+  };
+
+  // 🔥 EXPORT / IMPORT
+  const exportSettings = () => {
+    const data = JSON.stringify(settings);
+    navigator.clipboard.writeText(data);
+    alert("Copied to clipboard!");
+  };
+
+  const importSettings = () => {
+    const data = prompt("Paste settings JSON:");
+    if (!data) return;
+
+    try {
+      const parsed = JSON.parse(data);
+      setSettings(parsed);
+    } catch {
+      alert("Invalid JSON");
+    }
+  };
+
   const saveSettings = () => {
     localStorage.setItem("scoringSettings", JSON.stringify(settings));
-    alert("Settings saved!");
+    alert("Saved!");
   };
 
   const logout = () => {
@@ -51,7 +159,6 @@ export default function AccountSettings() {
     window.location.href = "/";
   };
 
-  // 🔥 TOTAL CALCULATIONS
   const mainTotal =
     settings.accuracy +
     settings.shootingSpeed +
@@ -62,34 +169,17 @@ export default function AccountSettings() {
     settings.focus +
     settings.robotType;
 
-  const autonTotal =
-    settings.autonShoot +
-    settings.autonCollectMiddle +
-    settings.autonCollectDepot +
-    settings.autonClimb;
-
-  const focusTotal =
-    settings.focusScoring +
-    settings.focusPassing +
-    settings.focusDefense;
-
-  const failureTotal =
-    settings.failureLostComm +
-    settings.failureLostPower +
-    settings.failureBrokenIntake;
-
-  // 🎛️ SLIDER
-  const slider = (label, field, isPercent = true) => (
-    <div style={{ marginBottom: "12px" }}>
+  const slider = (label, field, percent = true) => (
+    <div style={{ marginBottom: "10px" }}>
       <p>
-        {label}: {isPercent
+        {label}: {percent
           ? (settings[field] * 100).toFixed(0) + "%"
           : settings[field].toFixed(2)}
       </p>
       <input
         type="range"
         min="0"
-        max={isPercent ? "1" : "2"}
+        max={percent ? "1" : "2"}
         step="0.05"
         value={settings[field]}
         onChange={(e) => handleChange(field, e.target.value)}
@@ -98,24 +188,43 @@ export default function AccountSettings() {
     </div>
   );
 
-  // 🔥 TOTAL DISPLAY COMPONENT
-  const totalDisplay = (label, total) => (
-    <p style={{
-      color: Math.abs(total - 1) > 0.01 ? "#ff5252" : "#4caf50",
-      fontWeight: "bold"
-    }}>
-      {label}: {(total * 100).toFixed(0)}%
-    </p>
-  );
-
   return (
     <div style={{ padding: "15px", color: "white" }}>
       <h2>Account Settings</h2>
 
-      {/* MAIN WEIGHTS */}
+      {/* PRESETS */}
+      <div style={box}>
+        <h3>Presets</h3>
+        <button onClick={() => applyPreset("balanced")} style={btnSmall}>Balanced</button>
+        <button onClick={() => applyPreset("offense")} style={btnSmall}>Offense</button>
+        <button onClick={() => applyPreset("defense")} style={btnSmall}>Defense</button>
+
+        <hr />
+
+        <input
+          placeholder="Preset name"
+          value={presetName}
+          onChange={(e) => setPresetName(e.target.value)}
+        />
+        <button onClick={savePreset} style={btnSmall}>Save Preset</button>
+
+        {Object.keys(presets).map(name => (
+          <div key={name}>
+            <button onClick={() => loadPreset(name)} style={btnSmall}>
+              Load {name}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* MAIN */}
       <div style={box}>
         <h3>Main Weights</h3>
-        {totalDisplay("Total", mainTotal)}
+        <p style={{
+          color: Math.abs(mainTotal - 1) > 0.01 ? "red" : "green"
+        }}>
+          Total: {(mainTotal * 100).toFixed(0)}%
+        </p>
 
         {slider("Accuracy", "accuracy")}
         {slider("Shooting Speed", "shootingSpeed")}
@@ -125,38 +234,17 @@ export default function AccountSettings() {
         {slider("Awareness", "awareness")}
         {slider("Focus", "focus")}
         {slider("Robot Type", "robotType")}
+
+        <button onClick={normalizeMain} style={btnSmall}>
+          Lock to 100%
+        </button>
       </div>
 
-      {/* AUTON */}
+      {/* EXPORT */}
       <div style={box}>
-        <h3>Auton Breakdown</h3>
-        {totalDisplay("Total", autonTotal)}
-
-        {slider("Shoot", "autonShoot", false)}
-        {slider("Collect Middle", "autonCollectMiddle", false)}
-        {slider("Collect Depot", "autonCollectDepot", false)}
-        {slider("Climb", "autonClimb", false)}
-      </div>
-
-      {/* FOCUS */}
-      <div style={box}>
-        <h3>Focus Breakdown</h3>
-        {totalDisplay("Total", focusTotal)}
-
-        {slider("Scoring", "focusScoring", false)}
-        {slider("Passing", "focusPassing", false)}
-        {slider("Defense", "focusDefense", false)}
-      </div>
-
-      {/* FAILURES */}
-      <div style={box}>
-        <h3>Failure Penalties</h3>
-        {totalDisplay("Total", failureTotal)}
-
-        {slider("Lost Communication", "failureLostComm", false)}
-        {slider("Lost Power", "failureLostPower", false)}
-        {slider("Broken Intake", "failureBrokenIntake", false)}
-        {slider("Penalty Strength", "failurePenalty")}
+        <h3>Import / Export</h3>
+        <button onClick={exportSettings} style={btnSmall}>Export</button>
+        <button onClick={importSettings} style={btnSmall}>Import</button>
       </div>
 
       <button onClick={saveSettings} style={btn}>Save</button>
@@ -168,7 +256,6 @@ export default function AccountSettings() {
   );
 }
 
-// 🎨 STYLES
 const box = {
   background: "#1e1e1e",
   padding: "15px",
@@ -183,5 +270,14 @@ const btn = {
   border: "none",
   borderRadius: "10px",
   background: "#2d8cf0",
+  color: "white"
+};
+
+const btnSmall = {
+  margin: "5px",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  border: "none",
+  background: "#333",
   color: "white"
 };
