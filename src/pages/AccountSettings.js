@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 export default function AccountSettings() {
 
   const defaultSettings = {
-    accuracy: 0.18181818181818182,
-    shootingSpeed: 0.18181818181818182,
-    intakeSpeed: 0.18181818181818182,
+    accuracy: 0.1818,
+    shootingSpeed: 0.1818,
+    intakeSpeed: 0.1818,
     auton: 0.1,
     climb: 0.05,
     awareness: 0.1,
@@ -18,21 +18,23 @@ export default function AccountSettings() {
     autonCollectDepot: 0.25,
     autonClimb: 0.25,
 
-    focusScoring: 0.3333333333333333,
-    focusPassing: 0.3333333333333333,
-    focusDefense: 0.3333333333333333,
+    focusScoring: 0.3333,
+    focusPassing: 0.3333,
+    focusDefense: 0.3333,
 
-    failureLostComm: 0.3333333333333333,
-    failureLostPower: 0.3333333333333333,
-    failureBrokenIntake: 0.3333333333333333
+    failureLostComm: 0.3333,
+    failureLostPower: 0.3333,
+    failureBrokenIntake: 0.3333
   };
 
   const [settings, setSettings] = useState(defaultSettings);
-  const [presetName, setPresetName] = useState("");
   const [presets, setPresets] = useState({});
+  const [presetName, setPresetName] = useState("");
+
   const [calibrationTeams, setCalibrationTeams] = useState([]);
   const [teamInput, setTeamInput] = useState("");
 
+  // 🔥 LOAD SETTINGS
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("scoringSettings"));
     const savedPresets = JSON.parse(localStorage.getItem("scoringPresets")) || {};
@@ -40,6 +42,11 @@ export default function AccountSettings() {
     if (saved) setSettings({ ...defaultSettings, ...saved });
     setPresets(savedPresets);
   }, []);
+
+  // 🔥 AUTO SAVE
+  useEffect(() => {
+    localStorage.setItem("scoringSettings", JSON.stringify(settings));
+  }, [settings]);
 
   const handleChange = (field, value) => {
     setSettings(prev => ({
@@ -58,7 +65,7 @@ export default function AccountSettings() {
     setSettings(updated);
   };
 
-  // 🔥 TOTAL HELPER
+  // 🔥 TOTAL DISPLAY
   const total = (fields) =>
     fields.reduce((sum, f) => sum + settings[f], 0);
 
@@ -73,9 +80,11 @@ export default function AccountSettings() {
 
   const slider = (label, field, percent = true) => (
     <div style={{ marginBottom: "10px" }}>
-      <p>{label}: {percent
-        ? (settings[field] * 100).toFixed(0) + "%"
-        : settings[field].toFixed(2)}</p>
+      <p>
+        {label}: {percent
+          ? (settings[field] * 100).toFixed(0) + "%"
+          : settings[field].toFixed(2)}
+      </p>
       <input
         type="range"
         min="0"
@@ -88,30 +97,89 @@ export default function AccountSettings() {
     </div>
   );
 
-  // 🔥 PRESETS
-  const applyPreset = (type) => {
-    const presetMap = JSON.parse(localStorage.getItem("presetMap")) || {};
+  // 🔥 BUILT-IN PRESETS
+  const builtInPresets = {
+    balanced: {
+      accuracy: 0.18181818181818182,
+      shootingSpeed: 0.18181818181818182,
+      intakeSpeed: 0.18181818181818182,
+      auton: 0.1,
+      climb: 0.05,
+      awareness: 0.1,
+      focus: 0.1,
+      robotType: 0.1,
+      failurePenalty: 0.1,
 
-    const builtIn = {
-      balanced: defaultSettings,
-      offense: {
-        ...defaultSettings,
-        accuracy: 0.15,
-        shootingSpeed: 0.2,
-        intakeSpeed: 0.2
-      },
-      defense: {
-        ...defaultSettings,
-        climb: 0.2,
-        awareness: 0.2,
-        focus: 0.2
-      }
-    };
+      autonShoot: 0.25,
+      autonCollectMiddle: 0.25,
+      autonCollectDepot: 0.25,
+      autonClimb: 0.25,
 
-    setSettings(builtIn[type] || presetMap[type]);
+      focusScoring: 0.3333333333333333,
+      focusPassing: 0.3333333333333333,
+      focusDefense: 0.3333333333333333,
+
+      failureLostComm: 0.3333333333333333,
+      failureLostPower: 0.3333333333333333,
+      failureBrokenIntake: 0.3333333333333333
+    },
+
+    offense: {
+      accuracy: 0.15,
+      shootingSpeed: 0.2,
+      intakeSpeed: 0.2,
+      auton: 0.1,
+      climb: 0.05,
+      awareness: 0.1,
+      focus: 0.1,
+      robotType: 0.1,
+      failurePenalty: 0.1,
+
+      autonShoot: 0.4,
+      autonCollectMiddle: 0.2,
+      autonCollectDepot: 0.2,
+      autonClimb: 0.2,
+
+      focusScoring: 0.7142857142857143,
+      focusPassing: 0.14285714285714285,
+      focusDefense: 0.14285714285714285,
+
+      failureLostComm: 0.5,
+      failureLostPower: 0.25,
+      failureBrokenIntake: 0.25
+    },
+
+    defense: {
+      accuracy: 0.1,
+      shootingSpeed: 0.1,
+      intakeSpeed: 0.1,
+      auton: 0.05,
+      climb: 0.2,
+      awareness: 0.2,
+      focus: 0.2,
+      robotType: 0.05,
+      failurePenalty: 0.2,
+
+      autonShoot: 0.15,
+      autonCollectMiddle: 0.15,
+      autonCollectDepot: 0.15,
+      autonClimb: 0.55,
+
+      focusScoring: 0.1,
+      focusPassing: 0.2,
+      focusDefense: 0.7,
+
+      failureLostComm: 0.5,
+      failureLostPower: 0.4,
+      failureBrokenIntake: 0.1
+    }
   };
 
-  // 🔥 SAVE PRESET
+  const applyPreset = (type) => {
+    setSettings(builtInPresets[type]);
+  };
+
+  // 🔥 CUSTOM PRESETS
   const savePreset = () => {
     if (!presetName) return alert("Enter name");
 
@@ -123,31 +191,10 @@ export default function AccountSettings() {
 
   const loadPreset = (name) => setSettings(presets[name]);
 
-  // 🔥 EXPORT / IMPORT
-  const exportSettings = () => {
-    navigator.clipboard.writeText(JSON.stringify(settings));
-    alert("Copied!");
-  };
-
-  const importSettings = () => {
-    const data = prompt("Paste JSON");
-    if (!data) return;
-    try {
-      setSettings(JSON.parse(data));
-    } catch {
-      alert("Invalid");
-    }
-  };
-
-  // 🔥 CALIBRATION MODE
-  const addCalibrationTeam = () => {
+  // 🔥 CALIBRATION
+  const addTeam = () => {
     if (!teamInput) return;
-    if (calibrationTeams.includes(teamInput)) return;
-
-    if (calibrationTeams.length >= 5) {
-      alert("Max 5 teams");
-      return;
-    }
+    if (calibrationTeams.length >= 5) return alert("Max 5 teams");
 
     setCalibrationTeams([...calibrationTeams, teamInput]);
     setTeamInput("");
@@ -160,47 +207,27 @@ export default function AccountSettings() {
       calibrationTeams.includes(d.team.replace("frc", ""))
     );
 
-    if (filtered.length === 0) {
-      alert("No data for those teams");
-      return;
-    }
+    if (!filtered.length) return alert("No data");
 
-    let avg = {
-      accuracy: 0,
-      shootingSpeed: 0,
-      intakeSpeed: 0,
-      climb: 0,
-      awareness: 0
-    };
+    let avg = { accuracy: 0, shootingSpeed: 0, intakeSpeed: 0 };
 
     filtered.forEach(e => {
       avg.accuracy += Number(e.accuracy || 0);
       avg.shootingSpeed += Number(e.shootingSpeed || 0);
       avg.intakeSpeed += Number(e.intakeSpeed || 0);
-      if (e.climb?.includes("L3")) avg.climb += 1;
-      if (e.awareness === "Yes") avg.awareness += 1;
     });
 
-    const count = filtered.length;
-
-    Object.keys(avg).forEach(k => avg[k] /= count);
+    Object.keys(avg).forEach(k => avg[k] /= filtered.length);
 
     const totalVal = Object.values(avg).reduce((a, b) => a + b, 0);
 
-    const newSettings = { ...settings };
-
+    const updated = { ...settings };
     Object.keys(avg).forEach(k => {
-      newSettings[k] = avg[k] / totalVal;
+      updated[k] = avg[k] / totalVal;
     });
 
-    setSettings(newSettings);
-
-    alert("Calibration complete!");
-  };
-
-  const saveSettings = () => {
-    localStorage.setItem("scoringSettings", JSON.stringify(settings));
-    alert("Saved!");
+    setSettings(updated);
+    alert("Calibration done");
   };
 
   const logout = () => {
@@ -210,24 +237,29 @@ export default function AccountSettings() {
 
   return (
     <div style={{ padding: "15px", color: "white" }}>
-      <h2>Account Settings</h2>
+      <h2>Account Settings (Auto-Save Enabled)</h2>
 
-      {/* 🔥 CALIBRATION */}
+      {/* PRESETS */}
       <div style={box}>
-        <h3>Calibration Mode (Top 5 Teams)</h3>
+        <h3>Presets</h3>
+        <button onClick={() => applyPreset("balanced")} style={btnSmall}>Balanced</button>
+        <button onClick={() => applyPreset("offense")} style={btnSmall}>Offense</button>
+        <button onClick={() => applyPreset("defense")} style={btnSmall}>Defense</button>
+
+        <hr />
 
         <input
-          placeholder="Enter team #"
-          value={teamInput}
-          onChange={(e) => setTeamInput(e.target.value)}
+          placeholder="Preset name"
+          value={presetName}
+          onChange={(e) => setPresetName(e.target.value)}
         />
-        <button onClick={addCalibrationTeam} style={btnSmall}>Add</button>
+        <button onClick={savePreset} style={btnSmall}>Save</button>
 
-        <p>{calibrationTeams.join(", ")}</p>
-
-        <button onClick={runCalibration} style={btnSmall}>
-          Calibrate
-        </button>
+        {Object.keys(presets).map(name => (
+          <button key={name} onClick={() => loadPreset(name)} style={btnSmall}>
+            Load {name}
+          </button>
+        ))}
       </div>
 
       {/* MAIN */}
@@ -278,8 +310,24 @@ export default function AccountSettings() {
         </button>
       </div>
 
-      {/* SAVE / LOGOUT */}
-      <button onClick={saveSettings} style={btn}>Save</button>
+      {/* CALIBRATION */}
+      <div style={box}>
+        <h3>Calibration</h3>
+
+        <input
+          placeholder="Team #"
+          value={teamInput}
+          onChange={(e) => setTeamInput(e.target.value)}
+        />
+        <button onClick={addTeam} style={btnSmall}>Add</button>
+
+        <p>{calibrationTeams.join(", ")}</p>
+
+        <button onClick={runCalibration} style={btnSmall}>
+          Calibrate
+        </button>
+      </div>
+
       <button onClick={logout} style={{ ...btn, background: "red" }}>
         Logout
       </button>
