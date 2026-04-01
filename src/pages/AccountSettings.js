@@ -34,6 +34,7 @@ export default function AccountSettings() {
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("scoringSettings"));
     const savedPresets = JSON.parse(localStorage.getItem("scoringPresets")) || {};
+
     if (saved) setSettings({ ...defaultSettings, ...saved });
     setPresets(savedPresets);
   }, []);
@@ -45,33 +46,18 @@ export default function AccountSettings() {
     }));
   };
 
-  // 🔥 LOCK TO 100%
-  const normalizeMain = () => {
-    const total =
-      settings.accuracy +
-      settings.shootingSpeed +
-      settings.intakeSpeed +
-      settings.auton +
-      settings.climb +
-      settings.awareness +
-      settings.focus +
-      settings.robotType;
-
+  // 🔥 GENERIC NORMALIZE FUNCTION
+  const normalizeGroup = (fields) => {
+    const total = fields.reduce((sum, f) => sum + settings[f], 0);
     if (total === 0) return;
 
-    const normalized = {
-      ...settings,
-      accuracy: settings.accuracy / total,
-      shootingSpeed: settings.shootingSpeed / total,
-      intakeSpeed: settings.intakeSpeed / total,
-      auton: settings.auton / total,
-      climb: settings.climb / total,
-      awareness: settings.awareness / total,
-      focus: settings.focus / total,
-      robotType: settings.robotType / total
-    };
+    const updated = { ...settings };
 
-    setSettings(normalized);
+    fields.forEach(f => {
+      updated[f] = settings[f] / total;
+    });
+
+    setSettings(updated);
   };
 
   // 🔥 PRESETS
@@ -112,40 +98,30 @@ export default function AccountSettings() {
     setSettings(prev => ({ ...prev, ...presetMap[type] }));
   };
 
-  // 🔥 SAVE CUSTOM PRESET
+  // 🔥 SAVE PRESET
   const savePreset = () => {
-    if (!presetName) return alert("Enter a preset name");
+    if (!presetName) return alert("Enter name");
 
-    const updated = {
-      ...presets,
-      [presetName]: settings
-    };
-
+    const updated = { ...presets, [presetName]: settings };
     setPresets(updated);
     localStorage.setItem("scoringPresets", JSON.stringify(updated));
     setPresetName("");
   };
 
-  const loadPreset = (name) => {
-    setSettings(presets[name]);
-  };
+  const loadPreset = (name) => setSettings(presets[name]);
 
-  // 🔥 EXPORT / IMPORT
   const exportSettings = () => {
-    const data = JSON.stringify(settings);
-    navigator.clipboard.writeText(data);
-    alert("Copied to clipboard!");
+    navigator.clipboard.writeText(JSON.stringify(settings));
+    alert("Copied!");
   };
 
   const importSettings = () => {
-    const data = prompt("Paste settings JSON:");
+    const data = prompt("Paste JSON");
     if (!data) return;
-
     try {
-      const parsed = JSON.parse(data);
-      setSettings(parsed);
+      setSettings(JSON.parse(data));
     } catch {
-      alert("Invalid JSON");
+      alert("Invalid");
     }
   };
 
@@ -159,23 +135,24 @@ export default function AccountSettings() {
     window.location.href = "/";
   };
 
-  const mainTotal =
-    settings.accuracy +
-    settings.shootingSpeed +
-    settings.intakeSpeed +
-    settings.auton +
-    settings.climb +
-    settings.awareness +
-    settings.focus +
-    settings.robotType;
+  // 🔥 TOTALS
+  const total = (fields) =>
+    fields.reduce((sum, f) => sum + settings[f], 0);
+
+  const totalDisplay = (label, value) => (
+    <p style={{
+      color: Math.abs(value - 1) > 0.01 ? "red" : "lime",
+      fontWeight: "bold"
+    }}>
+      {label}: {(value * 100).toFixed(0)}%
+    </p>
+  );
 
   const slider = (label, field, percent = true) => (
     <div style={{ marginBottom: "10px" }}>
-      <p>
-        {label}: {percent
-          ? (settings[field] * 100).toFixed(0) + "%"
-          : settings[field].toFixed(2)}
-      </p>
+      <p>{label}: {percent
+        ? (settings[field] * 100).toFixed(0) + "%"
+        : settings[field].toFixed(2)}</p>
       <input
         type="range"
         min="0"
@@ -209,22 +186,19 @@ export default function AccountSettings() {
         <button onClick={savePreset} style={btnSmall}>Save Preset</button>
 
         {Object.keys(presets).map(name => (
-          <div key={name}>
-            <button onClick={() => loadPreset(name)} style={btnSmall}>
-              Load {name}
-            </button>
-          </div>
+          <button key={name} onClick={() => loadPreset(name)} style={btnSmall}>
+            Load {name}
+          </button>
         ))}
       </div>
 
       {/* MAIN */}
       <div style={box}>
         <h3>Main Weights</h3>
-        <p style={{
-          color: Math.abs(mainTotal - 1) > 0.01 ? "red" : "green"
-        }}>
-          Total: {(mainTotal * 100).toFixed(0)}%
-        </p>
+        {totalDisplay("Total", total([
+          "accuracy","shootingSpeed","intakeSpeed",
+          "auton","climb","awareness","focus","robotType"
+        ]))}
 
         {slider("Accuracy", "accuracy")}
         {slider("Shooting Speed", "shootingSpeed")}
@@ -235,12 +209,79 @@ export default function AccountSettings() {
         {slider("Focus", "focus")}
         {slider("Robot Type", "robotType")}
 
-        <button onClick={normalizeMain} style={btnSmall}>
-          Lock to 100%
+        <button onClick={() =>
+          normalizeGroup([
+            "accuracy","shootingSpeed","intakeSpeed",
+            "auton","climb","awareness","focus","robotType"
+          ])
+        } style={btnSmall}>
+          Normalize
         </button>
       </div>
 
-      {/* EXPORT */}
+      {/* AUTON */}
+      <div style={box}>
+        <h3>Auton Breakdown</h3>
+        {totalDisplay("Total", total([
+          "autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"
+        ]))}
+
+        {slider("Shoot", "autonShoot", false)}
+        {slider("Collect Middle", "autonCollectMiddle", false)}
+        {slider("Collect Depot", "autonCollectDepot", false)}
+        {slider("Climb", "autonClimb", false)}
+
+        <button onClick={() =>
+          normalizeGroup([
+            "autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"
+          ])
+        } style={btnSmall}>
+          Normalize
+        </button>
+      </div>
+
+      {/* FOCUS */}
+      <div style={box}>
+        <h3>Focus Breakdown</h3>
+        {totalDisplay("Total", total([
+          "focusScoring","focusPassing","focusDefense"
+        ]))}
+
+        {slider("Scoring", "focusScoring", false)}
+        {slider("Passing", "focusPassing", false)}
+        {slider("Defense", "focusDefense", false)}
+
+        <button onClick={() =>
+          normalizeGroup([
+            "focusScoring","focusPassing","focusDefense"
+          ])
+        } style={btnSmall}>
+          Normalize
+        </button>
+      </div>
+
+      {/* FAILURES */}
+      <div style={box}>
+        <h3>Failure Penalties</h3>
+        {totalDisplay("Total", total([
+          "failureLostComm","failureLostPower","failureBrokenIntake"
+        ]))}
+
+        {slider("Lost Comm", "failureLostComm", false)}
+        {slider("Lost Power", "failureLostPower", false)}
+        {slider("Broken Intake", "failureBrokenIntake", false)}
+        {slider("Penalty Strength", "failurePenalty")}
+
+        <button onClick={() =>
+          normalizeGroup([
+            "failureLostComm","failureLostPower","failureBrokenIntake"
+          ])
+        } style={btnSmall}>
+          Normalize
+        </button>
+      </div>
+
+      {/* IMPORT EXPORT */}
       <div style={box}>
         <h3>Import / Export</h3>
         <button onClick={exportSettings} style={btnSmall}>Export</button>
@@ -249,7 +290,7 @@ export default function AccountSettings() {
 
       <button onClick={saveSettings} style={btn}>Save</button>
 
-      <button onClick={logout} style={{ ...btn, background: "#c62828" }}>
+      <button onClick={logout} style={{ ...btn, background: "red" }}>
         Logout
       </button>
     </div>
