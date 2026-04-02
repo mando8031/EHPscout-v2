@@ -60,12 +60,29 @@ export default function ScoutForm() {
 
   const toggleMulti = (field, value) => {
     setForm(prev => {
-      const exists = prev[field].includes(value);
+      const current = prev[field];
+      const exists = current.includes(value);
+
+      // 🔥 SPECIAL RULE FOR "No"
+      if (value === "No") {
+        return {
+          ...prev,
+          [field]: exists ? [] : ["No"] // toggle No as single-only
+        };
+      }
+
+      // 🔥 If selecting something else, remove "No"
+      let newValues = current.filter(v => v !== "No");
+
+      if (exists) {
+        newValues = newValues.filter(v => v !== value);
+      } else {
+        newValues.push(value);
+      }
+
       return {
         ...prev,
-        [field]: exists
-          ? prev[field].filter(v => v !== value)
-          : [...prev[field], value]
+        [field]: newValues
       };
     });
   };
@@ -90,14 +107,6 @@ export default function ScoutForm() {
       form.focusOther.trim() === ""
     ) {
       return alert("Fill out main focus");
-    }
-
-    // ✅ FAILURES
-    if (
-      form.failures.length === 0 &&
-      form.failuresOther.trim() === ""
-    ) {
-      return alert("Fill out failures");
     }
 
     // ✅ AUTON
