@@ -246,15 +246,15 @@ export default function AccountSettings() {
 
     let updated = { ...settings };
 
-    // 🔥 adjust weights based on contribution
-    updated.accuracy *= (1 - norm.accuracy);
-    updated.shootingSpeed *= (1 - norm.shootingSpeed);
-    updated.intakeSpeed *= (1 - norm.intakeSpeed);
-    updated.awareness *= (1 - norm.awareness);
-    updated.climb *= (1 - norm.climb);
-    updated.auton *= (1 - norm.auton);
-    updated.focus *= (1 - norm.focus);
-    updated.robotType *= (1 - norm.robotType);
+    // 🔥 boost what the average team is GOOD at
+    updated.accuracy *= (norm.accuracy + 0.01);
+    updated.shootingSpeed *= (norm.shootingSpeed + 0.01);
+    updated.intakeSpeed *= (norm.intakeSpeed + 0.01);
+    updated.awareness *= (norm.awareness + 0.01);
+    updated.climb *= (norm.climb + 0.01);
+    updated.auton *= (norm.auton + 0.01);
+    updated.focus *= (norm.focus + 0.01);
+    updated.robotType *= (norm.robotType + 0.01);
 
     // failures = opposite (more failures = more weight)
     updated.failurePenalty *= (1 + norm.failures);
