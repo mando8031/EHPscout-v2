@@ -255,12 +255,13 @@ export default function AccountSettings() {
     updated.focusDefense = avg.focus.defense + 0.01;
 
     // FAILURES
-    updated.failureLostComm = avg.failures.comm + 0.01;
-    updated.failureLostPower = avg.failures.power + 0.01;
-    updated.failureBrokenIntake = avg.failures.intake + 0.01;
+    // 🔥 INVERT FAILURES (rare = important, common = less important)
+    updated.failureLostComm = (1 - avg.failures.comm) + 0.01;
+    updated.failureLostPower = (1 - avg.failures.power) + 0.01;
+    updated.failureBrokenIntake = (1 - avg.failures.intake) + 0.01;
 
-    // failures (more failures = more penalty weight)
-    updated.failurePenalty = norm.failures + 0.01;
+    // penalty weight also inverted
+    updated.failurePenalty = (1 - norm.failures) + 0.01;
 
     // 🔥 RE-NORMALIZE GROUPS (keep structure clean)
     const normalize = (fields) => {
