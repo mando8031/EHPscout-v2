@@ -17,13 +17,9 @@ export default function EventSelect() {
   useEffect(() => {
     async function loadEvents() {
       setLoading(true);
-      console.log("[v0] Fetching events for year:", new Date().getFullYear());
       const data = await getEvents(new Date().getFullYear());
-      console.log("[v0] Events received:", data?.length || 0, "events");
       if (Array.isArray(data)) {
         setEvents(data);
-      } else {
-        console.log("[v0] Data was not an array:", data);
       }
       setLoading(false);
     }

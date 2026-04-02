@@ -279,40 +279,93 @@ export default function ScoutForm() {
         </div>
         {teams.length === 0 ? (
           <p style={{ color: "#6b6b78", fontSize: 14 }}>Select a match first</p>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {teams.map(t => {
-              const alliance = getTeamAlliance(t);
-              const isSelected = selectedTeam === t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setSelectedTeam(t)}
-                  style={{
-                    flex: "1 1 calc(33.333% - 8px)",
-                    minWidth: 90,
-                    padding: "14px 8px",
-                    borderRadius: 12,
-                    border: isSelected 
-                      ? `2px solid ${alliance === "red" ? "#ef4444" : "#3b82f6"}`
-                      : "2px solid transparent",
-                    background: isSelected
-                      ? (alliance === "red" ? "rgba(239, 68, 68, 0.15)" : "rgba(59, 130, 246, 0.15)")
-                      : "#1a1a24",
-                    color: isSelected
-                      ? (alliance === "red" ? "#ef4444" : "#3b82f6")
-                      : "#9898a8",
-                    fontSize: 16,
-                    fontWeight: 600,
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  {t.replace("frc", "")}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        ) : (() => {
+          const match = matches.find(m => m.key === selectedMatch);
+          const redTeams = match?.alliances?.red?.team_keys || [];
+          const blueTeams = match?.alliances?.blue?.team_keys || [];
+          
+          return (
+            <div style={{ display: "flex", gap: 12 }}>
+              {/* Red Alliance - Left */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ 
+                  fontSize: 11, 
+                  fontWeight: 700, 
+                  color: "#ef4444", 
+                  textAlign: "center",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  marginBottom: 4
+                }}>
+                  Red Alliance
+                </div>
+                {redTeams.map(t => {
+                  const isSelected = selectedTeam === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setSelectedTeam(t)}
+                      style={{
+                        width: "100%",
+                        padding: "14px 8px",
+                        borderRadius: 12,
+                        border: isSelected ? "2px solid #ef4444" : "1px solid rgba(239, 68, 68, 0.3)",
+                        background: isSelected 
+                          ? "rgba(239, 68, 68, 0.25)" 
+                          : "rgba(239, 68, 68, 0.08)",
+                        color: isSelected ? "#ef4444" : "#f87171",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {t.replace("frc", "")}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Blue Alliance - Right */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ 
+                  fontSize: 11, 
+                  fontWeight: 700, 
+                  color: "#3b82f6", 
+                  textAlign: "center",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  marginBottom: 4
+                }}>
+                  Blue Alliance
+                </div>
+                {blueTeams.map(t => {
+                  const isSelected = selectedTeam === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setSelectedTeam(t)}
+                      style={{
+                        width: "100%",
+                        padding: "14px 8px",
+                        borderRadius: 12,
+                        border: isSelected ? "2px solid #3b82f6" : "1px solid rgba(59, 130, 246, 0.3)",
+                        background: isSelected 
+                          ? "rgba(59, 130, 246, 0.25)" 
+                          : "rgba(59, 130, 246, 0.08)",
+                        color: isSelected ? "#3b82f6" : "#60a5fa",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {t.replace("frc", "")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Auton */}
@@ -404,10 +457,10 @@ export default function ScoutForm() {
         </div>
         
         {/* Accuracy */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={sliderLabelStyle}>
-            <span style={{ color: "#9898a8", fontSize: 14 }}>Accuracy</span>
-            <span style={sliderValueStyle}>{form.accuracy}</span>
+        <div style={{ marginBottom: 28, maxWidth: 320, margin: "0 auto 28px" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <span style={{ color: "#9898a8", fontSize: 14, fontWeight: 500 }}>Accuracy</span>
+            <div style={{ fontSize: 32, fontWeight: 800, color: "#3b82f6", marginTop: 4 }}>{form.accuracy}</div>
           </div>
           <input
             type="range"
@@ -415,18 +468,19 @@ export default function ScoutForm() {
             max="5"
             value={form.accuracy}
             onChange={(e) => setForm({...form, accuracy: e.target.value})}
+            style={{ width: "100%" }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 8, padding: "0 4px" }}>
             <span>Poor</span>
             <span>Excellent</span>
           </div>
         </div>
 
         {/* Shooting Speed */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={sliderLabelStyle}>
-            <span style={{ color: "#9898a8", fontSize: 14 }}>Shooting Speed</span>
-            <span style={sliderValueStyle}>{form.shootingSpeed}</span>
+        <div style={{ marginBottom: 28, maxWidth: 320, margin: "0 auto 28px" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <span style={{ color: "#9898a8", fontSize: 14, fontWeight: 500 }}>Shooting Speed</span>
+            <div style={{ fontSize: 32, fontWeight: 800, color: "#3b82f6", marginTop: 4 }}>{form.shootingSpeed}</div>
           </div>
           <input
             type="range"
@@ -434,18 +488,19 @@ export default function ScoutForm() {
             max="5"
             value={form.shootingSpeed}
             onChange={(e) => setForm({...form, shootingSpeed: e.target.value})}
+            style={{ width: "100%" }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 8, padding: "0 4px" }}>
             <span>Slow</span>
             <span>Fast</span>
           </div>
         </div>
 
         {/* Intake Speed */}
-        <div>
-          <div style={sliderLabelStyle}>
-            <span style={{ color: "#9898a8", fontSize: 14 }}>Intake Speed</span>
-            <span style={sliderValueStyle}>{form.intakeSpeed}</span>
+        <div style={{ maxWidth: 320, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <span style={{ color: "#9898a8", fontSize: 14, fontWeight: 500 }}>Intake Speed</span>
+            <div style={{ fontSize: 32, fontWeight: 800, color: "#3b82f6", marginTop: 4 }}>{form.intakeSpeed}</div>
           </div>
           <input
             type="range"
@@ -453,8 +508,9 @@ export default function ScoutForm() {
             max="5"
             value={form.intakeSpeed}
             onChange={(e) => setForm({...form, intakeSpeed: e.target.value})}
+            style={{ width: "100%" }}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b6b78", marginTop: 8, padding: "0 4px" }}>
             <span>Slow</span>
             <span>Fast</span>
           </div>
