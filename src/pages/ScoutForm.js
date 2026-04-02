@@ -272,7 +272,7 @@ export default function ScoutForm() {
         {["Kitbot", "Custom", "Not Sure"].map(opt => (
           <button key={opt}
             style={buttonStyle(form.robotType.includes(opt))}
-            onClick={() => setForm("robotType", opt)}>
+            onClick={() => setForm({...form, robotType: opt})}>
             {opt}
           </button>
         ))}
