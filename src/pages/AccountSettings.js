@@ -247,6 +247,7 @@ export default function AccountSettings() {
     let updated = { ...settings };
 
     // 🔥 boost what the average team is GOOD at
+    // MAIN
     updated.accuracy *= (norm.accuracy + 0.01);
     updated.shootingSpeed *= (norm.shootingSpeed + 0.01);
     updated.intakeSpeed *= (norm.intakeSpeed + 0.01);
@@ -255,6 +256,22 @@ export default function AccountSettings() {
     updated.auton *= (norm.auton + 0.01);
     updated.focus *= (norm.focus + 0.01);
     updated.robotType *= (norm.robotType + 0.01);
+
+    // 🔥 AUTON SUBCATEGORY ADJUSTMENT
+    updated.autonShoot *= (avg.auton.shoot + 0.01);
+    updated.autonCollectMiddle *= (avg.auton.middle + 0.01);
+    updated.autonCollectDepot *= (avg.auton.depot + 0.01);
+    updated.autonClimb *= (avg.auton.climb + 0.01);
+
+    // 🔥 FOCUS SUBCATEGORY ADJUSTMENT
+    updated.focusScoring *= (avg.focus.scoring + 0.01);
+    updated.focusPassing *= (avg.focus.passing + 0.01);
+    updated.focusDefense *= (avg.focus.defense + 0.01);
+ 
+    // 🔥 FAILURE SUBCATEGORY ADJUSTMENT
+    updated.failureLostComm *= (avg.failures.comm + 0.01);
+    updated.failureLostPower *= (avg.failures.power + 0.01);
+    updated.failureBrokenIntake *= (avg.failures.intake + 0.01);
 
     // failures = opposite (more failures = more weight)
     updated.failurePenalty *= (1 + norm.failures);
