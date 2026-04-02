@@ -177,7 +177,7 @@ export default function AccountSettings() {
       if (e.auton?.includes("Collect Middle")) avg.auton.middle += 1;
       if (e.auton?.includes("Collect Depot")) avg.auton.depot += 1;
       if (e.auton?.includes("Climb")) avg.auton.climb += 1;
- 
+
       if (e.focus?.includes("Scoring")) avg.focus.scoring += 1;
       if (e.focus?.includes("Passing / Moving Balls")) avg.focus.passing += 1;
       if (e.focus?.includes("Defense")) avg.focus.defense += 1;
@@ -264,7 +264,7 @@ export default function AccountSettings() {
     normalize(["failureLostComm","failureLostPower","failureBrokenIntake"]);
 
     setSettings(updated);
-};
+  };
 
     // 🔥 INVERT → weaker = higher weight
     const invert = v => 1 - (v / 5);
