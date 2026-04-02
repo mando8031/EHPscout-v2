@@ -212,37 +212,23 @@ export default function AccountSettings() {
       climb: avg.climb,
       robotType: avg.robotType,
 
+      // 🔥 PURE AVERAGES (NO settings reference)
       auton:
-        avg.auton.shoot * settings.autonShoot +
-        avg.auton.middle * settings.autonCollectMiddle +
-        avg.auton.depot * settings.autonCollectDepot +
-        avg.auton.climb * settings.autonClimb,
+        (avg.auton.shoot +
+         avg.auton.middle +
+         avg.auton.depot +
+         avg.auton.climb) / 4,
 
       focus:
-        avg.focus.scoring * settings.focusScoring +
-        avg.focus.passing * settings.focusPassing +
-        avg.focus.defense * settings.focusDefense,
+        (avg.focus.scoring +
+         avg.focus.passing +
+         avg.focus.defense) / 3,
 
       failures:
-        avg.failures.comm * settings.failureLostComm +
-        avg.failures.power * settings.failureLostPower +
-        avg.failures.intake * settings.failureBrokenIntake
+        (avg.failures.comm +
+         avg.failures.power +
+         avg.failures.intake) / 3
     };
-
-    // 🔥 CURRENT SCORE OF AVG TEAM
-    let score =
-      norm.accuracy * settings.accuracy +
-      norm.shootingSpeed * settings.shootingSpeed +
-      norm.intakeSpeed * settings.intakeSpeed +
-      norm.awareness * settings.awareness +
-      norm.climb * settings.climb +
-      norm.auton * settings.auton +
-      norm.focus * settings.focus +
-      norm.robotType * settings.robotType -
-      norm.failures * settings.failurePenalty;
-
-    if (score <= 0) return alert("Calibration failed (score <= 0)");
-
 
     let updated = {};
 
