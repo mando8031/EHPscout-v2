@@ -63,16 +63,30 @@ export default function ScoutForm() {
       const current = prev[field];
       const exists = current.includes(value);
 
-      // 🔥 SPECIAL RULE FOR "No"
-      if (value === "No") {
+      // 🔥 Define exclusive options per field
+      const exclusiveOptions = {
+        climb: ["No"],
+        failures: ["None"],
+        auton: ["No Auton / Not Working"]
+      };
+  
+      const isExclusive = exclusiveOptions[field]?.includes(value);
+      const hasExclusiveSelected = current.some(v =>
+        exclusiveOptions[field]?.includes(v)
+      );
+ 
+      // 🔴 If clicking an exclusive option
+      if (isExclusive) {
         return {
           ...prev,
-          [field]: exists ? [] : ["No"] // toggle No as single-only
+          [field]: exists ? [] : [value]
         };
       }
 
-      // 🔥 If selecting something else, remove "No"
-      let newValues = current.filter(v => v !== "No");
+      // 🔴 If another option is selected, remove exclusive
+      let newValues = current.filter(
+        v => !exclusiveOptions[field]?.includes(v)
+      );
 
       if (exists) {
         newValues = newValues.filter(v => v !== value);
@@ -109,6 +123,14 @@ export default function ScoutForm() {
       return alert("Fill out main focus");
     }
 
+    // ✅ FAILURES (required again)
+    if (
+      form.failures.length === 0 &&
+      form.failuresOther.trim() === ""
+    ) {
+      return alert("Fill out failures");
+    }
+    
     // ✅ AUTON
     if (
       form.auton.length === 0 &&
@@ -312,7 +334,7 @@ export default function ScoutForm() {
       {/* FAILURES */}
       <div style={sectionStyle}>
         <h3>Failures</h3>
-        {["Lost Communication", "Lost Power", "Broken Intake", "Other"].map(opt => (
+        {["None", "Lost Communication", "Lost Power", "Broken Intake", "Other"].map(opt => (
           <button key={opt}
             style={buttonStyle(form.failures.includes(opt))}
             onClick={() => toggleMulti("failures", opt)}>
