@@ -100,6 +100,9 @@ export default function EventSelect() {
 
     setSelectedEvent(event.key);
     setSelectedEventName(event.name);
+
+    // 🔥 FORCE RE-RENDER OF APP
+    window.location.reload();
   };
 
   return (
