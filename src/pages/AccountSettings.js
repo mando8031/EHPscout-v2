@@ -290,8 +290,8 @@ export default function AccountSettings() {
       "failureLostComm","failureLostPower","failureBrokenIntake"
     ]);
     
-    setSettings(updated);
-  };
+    setSettings(updated);               // update React state
+    localStorage.setItem("scoringSettings", JSON.stringify(updated)); // immediately save
 
 
   const logout = () => {
