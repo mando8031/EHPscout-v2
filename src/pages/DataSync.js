@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import QRCode from "qrcode.react";
 import { Html5Qrcode } from "html5-qrcode";
+import LZString from "lz-string";
 
 export default function DataSync() {
 
@@ -9,22 +10,25 @@ export default function DataSync() {
   const [scanning, setScanning] = useState(false);
   const [received, setReceived] = useState({});
 
-  // 📤 SPLIT DATA INTO CHUNKS
+  // 📤 GENERATE COMPRESSED QR DATA
   const handleGenerateQR = () => {
-    const data = localStorage.getItem("scoutingData") || "[]";
 
-    const CHUNK_SIZE = 800; // safe QR size
+    const raw = localStorage.getItem("scoutingData") || "[]";
+
+    // 🔥 COMPRESS
+    const compressed = LZString.compressToEncodedURIComponent(raw);
+
+    const CHUNK_SIZE = 1000; // bigger now because compressed
 
     const parts = [];
-    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-      parts.push(data.slice(i, i + CHUNK_SIZE));
+    for (let i = 0; i < compressed.length; i += CHUNK_SIZE) {
+      parts.push(compressed.slice(i, i + CHUNK_SIZE));
     }
 
-    // wrap with metadata
     const wrapped = parts.map((chunk, index) => JSON.stringify({
-      index,
-      total: parts.length,
-      data: chunk
+      i: index,
+      t: parts.length,
+      d: chunk
     }));
 
     setChunks(wrapped);
@@ -63,23 +67,26 @@ export default function DataSync() {
         try {
           const parsed = JSON.parse(decodedText);
 
-          if (parsed.index === undefined) return;
+          if (parsed.i === undefined) return;
 
           setReceived(prev => {
-            if (prev[parsed.index]) return prev; // already scanned
 
-            const updated = { ...prev, [parsed.index]: parsed.data };
+            if (prev[parsed.i]) return prev;
 
-            const total = parsed.total;
+            const updated = { ...prev, [parsed.i]: parsed.d };
+            const total = parsed.t;
 
-            // ✅ CHECK IF COMPLETE
+            // ✅ COMPLETE
             if (Object.keys(updated).length === total) {
 
               // 🔗 REASSEMBLE
-              const fullString = Object.keys(updated)
+              const compressedFull = Object.keys(updated)
                 .sort((a, b) => a - b)
                 .map(i => updated[i])
                 .join("");
+
+              // 🔥 DECOMPRESS
+              const fullString = LZString.decompressFromEncodedURIComponent(compressedFull);
 
               const imported = JSON.parse(fullString);
               const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
@@ -118,14 +125,13 @@ export default function DataSync() {
 
   return (
     <div style={{ padding: "20px", color: "white" }}>
-      <h1>QR Sync (Full Transfer)</h1>
+      <h1>QR Sync (Compressed)</h1>
 
-      {/* EXPORT */}
       <button
         onClick={handleGenerateQR}
         style={{ width: "100%", padding: "15px", marginBottom: "15px" }}
       >
-        Generate Multi QR
+        Generate QR
       </button>
 
       {chunks.length > 0 && (
@@ -134,27 +140,24 @@ export default function DataSync() {
 
           <p>{currentChunk + 1} / {chunks.length}</p>
 
-          <button onClick={prevQR} style={{ margin: "5px" }}>⬅️</button>
-          <button onClick={nextQR} style={{ margin: "5px" }}>➡️</button>
+          <button onClick={prevQR}>⬅️</button>
+          <button onClick={nextQR}>➡️</button>
         </div>
       )}
 
-      {/* IMPORT */}
       {!scanning && (
         <button
           onClick={startScanner}
           style={{ width: "100%", padding: "15px", marginTop: "20px" }}
         >
-          Scan Multi QR
+          Scan QR
         </button>
       )}
 
       {scanning && (
         <div>
           <div id="reader" style={{ marginTop: "20px" }} />
-          <p style={{ marginTop: "10px" }}>
-            Scanned: {Object.keys(received).length} chunks
-          </p>
+          <p>Scanned: {Object.keys(received).length}</p>
         </div>
       )}
     </div>
