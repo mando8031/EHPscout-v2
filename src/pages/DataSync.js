@@ -9,22 +9,10 @@ export default function DataSync() {
   // 📤 EXPORT
   const handleExport = () => {
 
-    const rawData = JSON.parse(localStorage.getItem("scoutingData") || "[]");
-
-    console.log("EXPORTING:", rawData);
-
-    const cleaned = rawData.map(e => ({
-      t: e.team,
-      m: e.matchNumber,
-      a: e.auton,
-      ac: e.accuracy,
-      c: e.climb,
-      mv: e.movement,
-      i: e.intake
-    }));
+    const data = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
     const compressed = btoa(
-      String.fromCharCode(...pako.deflate(JSON.stringify(cleaned)))
+      String.fromCharCode(...pako.deflate(JSON.stringify(data)))
     );
 
     setExportText(compressed);
@@ -41,74 +29,46 @@ export default function DataSync() {
 
       const decompressed = pako.inflate(binary, { to: "string" });
 
-      const importedShort = JSON.parse(decompressed);
+      const imported = JSON.parse(decompressed);
 
-      console.log("RAW IMPORT:", importedShort);
+      console.log("IMPORTED:", imported);
 
-      if (!Array.isArray(importedShort)) {
-        throw new Error("Invalid format");
+      if (!Array.isArray(imported)) {
+        throw new Error("Invalid data");
       }
 
-      // 🔥 EXPAND
-      const imported = importedShort.map(e => ({
-        team: e.t,
-        matchNumber: e.m,
-        auton: e.a,
-        accuracy: e.ac,
-        climb: e.c,
-        movement: e.mv,
-        intake: e.i
-      }));
+      // 🔥 FILTER ONLY VALID ENTRIES
+      const valid = imported.filter(e =>
+        e &&
+        typeof e === "object" &&
+        e.team &&
+        e.matchNumber
+      );
+
+      console.log("VALID:", valid);
 
       const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
-      console.log("EXISTING:", existing);
+      // 🔥 APPEND ONLY (NO OVERWRITE)
+      const merged = [...existing];
 
-      const map = {};
+      valid.forEach(newEntry => {
 
-      // ✅ LOAD EXISTING FIRST
-      existing.forEach(entry => {
-        if (!entry.team || !entry.matchNumber) return;
+        const exists = merged.some(e =>
+          e.team === newEntry.team &&
+          e.matchNumber === newEntry.matchNumber
+        );
 
-        const key = `${entry.team}-${entry.matchNumber}`;
-        map[key] = entry;
-      });
-
-      // ✅ MERGE NEW SAFELY
-      imported.forEach(entry => {
-
-        if (!entry.team || !entry.matchNumber) {
-          console.warn("Skipping invalid entry:", entry);
-          return;
-        }
-
-        const key = `${entry.team}-${entry.matchNumber}`;
-
-        const existingEntry = map[key];
-
-        // 🧠 KEEP BEST DATA
-        if (!existingEntry) {
-          map[key] = entry;
-          return;
-        }
-
-        // Only replace if new data is more complete
-        const score = (e) =>
-          [e.auton, e.accuracy, e.climb, e.movement, e.intake]
-            .filter(v => v !== null && v !== undefined).length;
-
-        if (score(entry) >= score(existingEntry)) {
-          map[key] = entry;
+        if (!exists) {
+          merged.push(newEntry);
         }
       });
 
-      const merged = Object.values(map);
-
-      console.log("FINAL MERGED:", merged);
+      console.log("FINAL:", merged);
 
       localStorage.setItem("scoutingData", JSON.stringify(merged));
 
-      alert("Import successful!");
+      alert("Import complete (no overwrite)");
 
       setImportText("");
 
