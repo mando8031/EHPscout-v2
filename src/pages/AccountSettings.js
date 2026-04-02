@@ -256,9 +256,9 @@ export default function AccountSettings() {
 
     // FAILURES
     // 🔥 INVERT FAILURES (rare = important, common = less important)
-    updated.failureLostComm = (1 - avg.failures.comm) + 0.01;
-    updated.failureLostPower = (1 - avg.failures.power) + 0.01;
-    updated.failureBrokenIntake = (1 - avg.failures.intake) + 0.01;
+    updated.failureLostComm = (1 - avg.failures.comm) + 0.333333333333;
+    updated.failureLostPower = (1 - avg.failures.power) + 0.3333333333333;
+    updated.failureBrokenIntake = (1 - avg.failures.intake) + 0.333333333333;
 
     // penalty weight also inverted
     updated.failurePenalty = (1 - norm.failures) + 0.01;
