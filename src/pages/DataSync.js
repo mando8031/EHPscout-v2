@@ -6,10 +6,12 @@ export default function DataSync() {
   const [exportText, setExportText] = useState("");
   const [importText, setImportText] = useState("");
 
-  // 📤 EXPORT DATA
+  // 📤 EXPORT
   const handleExport = () => {
 
     const rawData = JSON.parse(localStorage.getItem("scoutingData") || "[]");
+
+    console.log("EXPORTING:", rawData);
 
     const cleaned = rawData.map(e => ({
       t: e.team,
@@ -21,16 +23,14 @@ export default function DataSync() {
       i: e.intake
     }));
 
-    const json = JSON.stringify(cleaned);
-
     const compressed = btoa(
-      String.fromCharCode(...pako.deflate(json))
+      String.fromCharCode(...pako.deflate(JSON.stringify(cleaned)))
     );
 
     setExportText(compressed);
   };
 
-  // 📥 IMPORT DATA
+  // 📥 IMPORT
   const handleImport = () => {
 
     try {
@@ -43,6 +43,13 @@ export default function DataSync() {
 
       const importedShort = JSON.parse(decompressed);
 
+      console.log("RAW IMPORT:", importedShort);
+
+      if (!Array.isArray(importedShort)) {
+        throw new Error("Invalid format");
+      }
+
+      // 🔥 EXPAND
       const imported = importedShort.map(e => ({
         team: e.t,
         matchNumber: e.m,
@@ -55,23 +62,59 @@ export default function DataSync() {
 
       const existing = JSON.parse(localStorage.getItem("scoutingData") || "[]");
 
+      console.log("EXISTING:", existing);
+
       const map = {};
-      [...existing, ...imported].forEach(entry => {
+
+      // ✅ LOAD EXISTING FIRST
+      existing.forEach(entry => {
+        if (!entry.team || !entry.matchNumber) return;
+
         const key = `${entry.team}-${entry.matchNumber}`;
         map[key] = entry;
       });
 
+      // ✅ MERGE NEW SAFELY
+      imported.forEach(entry => {
+
+        if (!entry.team || !entry.matchNumber) {
+          console.warn("Skipping invalid entry:", entry);
+          return;
+        }
+
+        const key = `${entry.team}-${entry.matchNumber}`;
+
+        const existingEntry = map[key];
+
+        // 🧠 KEEP BEST DATA
+        if (!existingEntry) {
+          map[key] = entry;
+          return;
+        }
+
+        // Only replace if new data is more complete
+        const score = (e) =>
+          [e.auton, e.accuracy, e.climb, e.movement, e.intake]
+            .filter(v => v !== null && v !== undefined).length;
+
+        if (score(entry) >= score(existingEntry)) {
+          map[key] = entry;
+        }
+      });
+
       const merged = Object.values(map);
+
+      console.log("FINAL MERGED:", merged);
 
       localStorage.setItem("scoutingData", JSON.stringify(merged));
 
-      alert("Data imported successfully!");
+      alert("Import successful!");
 
       setImportText("");
 
     } catch (err) {
-      console.error(err);
-      alert("Invalid data");
+      console.error("IMPORT ERROR:", err);
+      alert("Import failed");
     }
   };
 
@@ -79,7 +122,6 @@ export default function DataSync() {
     <div style={{ padding: "20px" }}>
       <h1>Data Sync</h1>
 
-      {/* EXPORT */}
       <button
         onClick={handleExport}
         style={{ width: "100%", padding: "15px", marginBottom: "10px" }}
@@ -95,7 +137,6 @@ export default function DataSync() {
         />
       )}
 
-      {/* IMPORT */}
       <textarea
         placeholder="Paste data here..."
         value={importText}
