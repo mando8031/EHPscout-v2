@@ -96,20 +96,19 @@ function BottomNav() {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 3,
-              padding: "6px 4px",
-              borderRadius: 10,
+              gap: 4,
+              padding: "8px 12px",
+              borderRadius: 12,
               color: isActive ? "#3b82f6" : "#6b6b78",
               background: isActive ? "rgba(59, 130, 246, 0.1)" : "transparent",
               transition: "all 0.2s ease",
               textDecoration: "none",
-              minWidth: 52,
-              flex: 1
+              minWidth: 60
             }}
           >
             {getIcon(item.icon)}
             <span style={{ 
-              fontSize: 10, 
+              fontSize: 11, 
               fontWeight: isActive ? 600 : 500,
               letterSpacing: "-0.01em"
             }}>
