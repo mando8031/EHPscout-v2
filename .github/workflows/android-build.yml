@@ -3,57 +3,68 @@ name: Build Capacitor Android App
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering from the Actions tab
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Node.js (for your React app)
+      # 2. Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 18
 
       # 3. Install dependencies
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       # 4. Build the React app
       - name: Build React app
         run: npm run build
 
-      # 5. Ensure Capacitor is available
-      - name: Install Capacitor CLI
-        run: npm install @capacitor/cli @capacitor/core
+      # 5. Ensure Capacitor is installed
+      - name: Install Capacitor
+        run: npm install @capacitor/core @capacitor/cli
 
-      # 6. Sync Capacitor with Android
+      # 6. Initialize Capacitor (if not already initialized)
+      - name: Initialize Capacitor
+        run: |
+          if [ ! -f "capacitor.config.json" ]; then
+            npx cap init "My App" "com.example.myapp" --web-dir=build
+          fi
+
+      # 7. Add the Android platform (if not already added)
+      - name: Add Android Platform
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      # 8. Sync the web assets with the Android project
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # 7. Set up Java for Android build
+      # 9. Set up Java for Android build
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
 
-      # 8. Grant execute permission to Gradle
-      - name: Grant execute permission
-        run: chmod +x android/gradlew
-
-      # 9. Build the Debug APK
+      # 10. Build the Debug APK
       - name: Build Debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      # 10. Upload the APK as an artifact
+      # 11. Upload the APK as a downloadable artifact
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
