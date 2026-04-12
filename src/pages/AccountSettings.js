@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { PageHeader, Card } from "./EventSelect";
 
 export default function AccountSettings() {
   const defaultSettings = {
-    accuracy: 0.1818, shootingSpeed: 0.1818, intakeSpeed: 0.1818,
-    auton: 0.1, climb: 0.05, awareness: 0.1, focus: 0.1, robotType: 0.1, failurePenalty: 0.1,
-    autonShoot: 0.25, autonCollectMiddle: 0.25, autonCollectDepot: 0.25, autonClimb: 0.25,
-    focusScoring: 0.3333, focusPassing: 0.3333, focusDefense: 0.3333,
-    failureLostComm: 0.3333, failureLostPower: 0.3333, failureBrokenIntake: 0.3333
+    accuracy: 0.1818,
+    shootingSpeed: 0.1818,
+    intakeSpeed: 0.1818,
+    auton: 0.1,
+    climb: 0.05,
+    awareness: 0.1,
+    focus: 0.1,
+    robotType: 0.1,
+    failurePenalty: 0.1,
+    autonShoot: 0.25,
+    autonCollectMiddle: 0.25,
+    autonCollectDepot: 0.25,
+    autonClimb: 0.25,
+    focusScoring: 0.3333,
+    focusPassing: 0.3333,
+    focusDefense: 0.3333,
+    failureLostComm: 0.3333,
+    failureLostPower: 0.3333,
+    failureBrokenIntake: 0.3333
   };
 
-  const [settings,    setSettings]    = useState(defaultSettings);
-  const [presetName,  setPresetName]  = useState("");
-  const [presets,     setPresets]     = useState({});
-  const [teamsInput,  setTeamsInput]  = useState("");
-  const [activeTab,   setActiveTab]   = useState("presets");
+  const [settings, setSettings] = useState(defaultSettings);
+  const [presetName, setPresetName] = useState("");
+  const [presets, setPresets] = useState({});
+  const [teamsInput, setTeamsInput] = useState("");
+  const [activeSection, setActiveSection] = useState("presets");
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("scoringSettings"));
@@ -27,283 +40,456 @@ export default function AccountSettings() {
     localStorage.setItem("scoringSettings", JSON.stringify(settings));
   }, [settings]);
 
-  const handleChange = (field, value) => setSettings(p => ({ ...p, [field]: Number(value) }));
+  const handleChange = (field, value) => {
+    setSettings(prev => ({ ...prev, [field]: Number(value) }));
+  };
 
   const normalizeGroup = (fields, obj = settings) => {
-    const t = fields.reduce((s, f) => s + obj[f], 0);
-    if (t === 0) return obj;
-    const u = { ...obj };
-    fields.forEach(f => { u[f] = obj[f] / t; });
-    return u;
+    const total = fields.reduce((sum, f) => sum + obj[f], 0);
+    if (total === 0) return obj;
+    const updated = { ...obj };
+    fields.forEach(f => { updated[f] = obj[f] / total; });
+    return updated;
   };
 
-  const total = (fields) => fields.reduce((s, f) => s + settings[f], 0);
+  const total = (fields) => fields.reduce((sum, f) => sum + settings[f], 0);
 
-  const TotalBadge = ({ fields }) => {
-    const v = total(fields);
-    const ok = Math.abs(v - 1) <= 0.01;
-    return (
-      <span style={{
-        fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 6,
-        background: ok ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
-        color: ok ? "#22c55e" : "#ef4444"
-      }}>
-        {(v * 100).toFixed(0)}%
-      </span>
-    );
-  };
-
-  const Slider = ({ label, field }) => (
-    <div style={{ marginBottom: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{label}</span>
-        <span style={{ fontSize: 18, fontWeight: 700, color: "var(--blue)", lineHeight: 1 }}>
-          {(settings[field] * 100).toFixed(0)}%
-        </span>
-      </div>
-      <input type="range" min="0" max="1" step="0.01" value={settings[field]}
-        onChange={e => handleChange(field, e.target.value)} />
+  const totalDisplay = (value) => (
+    <div style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "4px 10px",
+      borderRadius: 6,
+      fontSize: 12,
+      fontWeight: 600,
+      background: Math.abs(value - 1) > 0.01 ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.15)",
+      color: Math.abs(value - 1) > 0.01 ? "#ef4444" : "#22c55e"
+    }}>
+      Total: {(value * 100).toFixed(0)}%
     </div>
   );
 
-  const NormBtn = ({ fields }) => (
-    <button
-      onClick={() => setSettings(normalizeGroup(fields))}
-      style={{
-        marginTop: 8, padding: "9px 16px", fontSize: 12, fontWeight: 500,
-        background: "var(--bg-elevated)", border: "1px solid var(--border)",
-        color: "var(--text-secondary)", borderRadius: 8
-      }}
-    >
-      Normalize to 100%
-    </button>
+  const slider = (label, field) => (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 8
+      }}>
+        <span style={{ fontSize: 13, color: "#9898a8" }}>{label}</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: "#3b82f6" }}>
+          {(settings[field] * 100).toFixed(0)}%
+        </span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={settings[field]}
+        onChange={(e) => handleChange(field, e.target.value)}
+      />
+    </div>
   );
 
   const applyPreset = (type) => {
-    const map = {
-      balanced: { accuracy:0.1818,shootingSpeed:0.1818,intakeSpeed:0.1818,auton:0.1,climb:0.05,awareness:0.1,focus:0.1,robotType:0.1,failurePenalty:0.1,autonShoot:0.25,autonCollectMiddle:0.25,autonCollectDepot:0.25,autonClimb:0.25,focusScoring:0.3333,focusPassing:0.3333,focusDefense:0.3333,failureLostComm:0.3333,failureLostPower:0.3333,failureBrokenIntake:0.3333 },
-      offense:  { accuracy:0.15,shootingSpeed:0.2,intakeSpeed:0.2,auton:0.1,climb:0.05,awareness:0.1,focus:0.1,robotType:0.1,failurePenalty:0.1,autonShoot:0.4,autonCollectMiddle:0.2,autonCollectDepot:0.2,autonClimb:0.2,focusScoring:0.7143,focusPassing:0.1429,focusDefense:0.1429,failureLostComm:0.5,failureLostPower:0.25,failureBrokenIntake:0.25 },
-      defense:  { accuracy:0.1,shootingSpeed:0.1,intakeSpeed:0.1,auton:0.05,climb:0.2,awareness:0.2,focus:0.2,robotType:0.05,failurePenalty:0.2,autonShoot:0.15,autonCollectMiddle:0.15,autonCollectDepot:0.15,autonClimb:0.55,focusScoring:0.1,focusPassing:0.2,focusDefense:0.7,failureLostComm:0.5,failureLostPower:0.4,failureBrokenIntake:0.1 }
+    const presetMap = {
+      balanced: {"accuracy":0.18181818181818182,"shootingSpeed":0.18181818181818182,"intakeSpeed":0.18181818181818182,"auton":0.1,"climb":0.05,"awareness":0.1,"focus":0.1,"robotType":0.1,"failurePenalty":0.1,"autonShoot":0.25,"autonCollectMiddle":0.25,"autonCollectDepot":0.25,"autonClimb":0.25,"focusScoring":0.3333333333333333,"focusPassing":0.3333333333333333,"focusDefense":0.3333333333333333,"failureLostComm":0.3333333333333333,"failureLostPower":0.3333333333333333,"failureBrokenIntake":0.3333333333333333},
+      offense: {"accuracy":0.15,"shootingSpeed":0.2,"intakeSpeed":0.2,"auton":0.1,"climb":0.05,"awareness":0.1,"focus":0.1,"robotType":0.1,"failurePenalty":0.1,"autonShoot":0.4,"autonCollectMiddle":0.2,"autonCollectDepot":0.2,"autonClimb":0.2,"focusScoring":0.7142857142857143,"focusPassing":0.14285714285714285,"focusDefense":0.14285714285714285,"failureLostComm":0.5,"failureLostPower":0.25,"failureBrokenIntake":0.25},
+      defense: {"accuracy":0.1,"shootingSpeed":0.1,"intakeSpeed":0.1,"auton":0.05,"climb":0.2,"awareness":0.2,"focus":0.2,"robotType":0.05,"failurePenalty":0.2,"autonShoot":0.15,"autonCollectMiddle":0.15,"autonCollectDepot":0.15,"autonClimb":0.55,"focusScoring":0.1,"focusPassing":0.2,"focusDefense":0.7,"failureLostComm":0.5,"failureLostPower":0.4,"failureBrokenIntake":0.1}
     };
-    setSettings(map[type]);
+    setSettings(presetMap[type]);
   };
 
   const savePreset = () => {
     if (!presetName) return;
-    const u = { ...presets, [presetName]: settings };
-    setPresets(u);
-    localStorage.setItem("scoringPresets", JSON.stringify(u));
+    const updated = { ...presets, [presetName]: settings };
+    setPresets(updated);
+    localStorage.setItem("scoringPresets", JSON.stringify(updated));
     setPresetName("");
   };
 
-  const exportSettings = () => { navigator.clipboard.writeText(JSON.stringify(settings)); alert("Copied!"); };
+  const loadPreset = (name) => setSettings(presets[name]);
+
+  const exportSettings = () => {
+    navigator.clipboard.writeText(JSON.stringify(settings));
+    alert("Copied to clipboard!");
+  };
+
   const importSettings = () => {
-    const d = prompt("Paste JSON settings");
-    if (!d) return;
-    try { setSettings(JSON.parse(d)); } catch { alert("Invalid JSON"); }
+    const data = prompt("Paste JSON");
+    if (data === null || data.trim() === "") return;
+    try { setSettings(JSON.parse(data)); } catch { alert("Invalid JSON"); }
   };
 
   const runCalibration = () => {
     const input = teamsInput.split(",").map(t => t.trim()).filter(Boolean);
-    if (!input.length) return alert("Enter teams");
+    if (input.length === 0) return alert("Enter teams");
+
     const teams = input.map(t => t.startsWith("frc") ? t : `frc${t}`);
-    const data  = JSON.parse(localStorage.getItem("scoutingData") || "[]");
+    const data = JSON.parse(localStorage.getItem("scoutingData") || "[]");
     const event = localStorage.getItem("selectedEvent");
     const filtered = data.filter(d => d.event === event && teams.includes(d.team));
-    if (!filtered.length) return alert("No data for those teams");
+    if (filtered.length === 0) return alert("No data for those teams");
 
-    const avg = { accuracy:0,shootingSpeed:0,intakeSpeed:0,awareness:0,climb:0,robotType:0, auton:{shoot:0,middle:0,depot:0,climb:0}, focus:{scoring:0,passing:0,defense:0}, failures:{comm:0,power:0,intake:0} };
+    const avg = {
+      accuracy: 0, shootingSpeed: 0, intakeSpeed: 0, awareness: 0, climb: 0, robotType: 0,
+      auton: { shoot: 0, middle: 0, depot: 0, climb: 0 },
+      focus: { scoring: 0, passing: 0, defense: 0 },
+      failures: { comm: 0, power: 0, intake: 0 }
+    };
+
     filtered.forEach(e => {
-      avg.accuracy      += Number(e.accuracy || 0);
+      avg.accuracy += Number(e.accuracy || 0);
       avg.shootingSpeed += Number(e.shootingSpeed || 0);
-      avg.intakeSpeed   += Number(e.intakeSpeed || 0);
-      if (e.awareness === "Yes")          avg.awareness += 1;
+      avg.intakeSpeed += Number(e.intakeSpeed || 0);
+      if (e.awareness === "Yes") avg.awareness += 1;
       else if (e.awareness === "Kind of Lost") avg.awareness += 0.5;
-      if (e.climb?.includes("L3"))       avg.climb += 1;
+      if (e.climb?.includes("L3")) avg.climb += 1;
       else if (e.climb?.includes("L2")) avg.climb += 0.7;
       else if (e.climb?.includes("L1")) avg.climb += 0.4;
       if (e.robotType?.includes("Custom")) avg.robotType += 1;
-      if (e.auton?.includes("Shoot"))          avg.auton.shoot  += 1;
+      if (e.auton?.includes("Shoot")) avg.auton.shoot += 1;
       if (e.auton?.includes("Collect Middle")) avg.auton.middle += 1;
-      if (e.auton?.includes("Collect Depot"))  avg.auton.depot  += 1;
-      if (e.auton?.includes("Climb"))          avg.auton.climb  += 1;
-      if (e.focus?.includes("Scoring"))              avg.focus.scoring += 1;
+      if (e.auton?.includes("Collect Depot")) avg.auton.depot += 1;
+      if (e.auton?.includes("Climb")) avg.auton.climb += 1;
+      if (e.focus?.includes("Scoring")) avg.focus.scoring += 1;
       if (e.focus?.includes("Passing / Moving Balls")) avg.focus.passing += 1;
-      if (e.focus?.includes("Defense"))              avg.focus.defense += 1;
-      if (e.failures?.includes("Lost Communication")) avg.failures.comm   += 1;
-      if (e.failures?.includes("Lost Power"))         avg.failures.power  += 1;
-      if (e.failures?.includes("Broken Intake"))      avg.failures.intake += 1;
+      if (e.focus?.includes("Defense")) avg.focus.defense += 1;
+      if (e.failures?.includes("Lost Communication")) avg.failures.comm += 1;
+      if (e.failures?.includes("Lost Power")) avg.failures.power += 1;
+      if (e.failures?.includes("Broken Intake")) avg.failures.intake += 1;
     });
-    const n = filtered.length;
-    const s = v => v / n;
-    avg.accuracy = s(avg.accuracy); avg.shootingSpeed = s(avg.shootingSpeed); avg.intakeSpeed = s(avg.intakeSpeed);
-    avg.awareness = s(avg.awareness); avg.climb = s(avg.climb); avg.robotType = s(avg.robotType);
-    Object.keys(avg.auton).forEach(k    => avg.auton[k]    = s(avg.auton[k]));
-    Object.keys(avg.focus).forEach(k    => avg.focus[k]    = s(avg.focus[k]));
-    Object.keys(avg.failures).forEach(k => avg.failures[k] = s(avg.failures[k]));
-    let u = {
-      accuracy: (avg.accuracy - 1)/4 + 0.01, shootingSpeed: (avg.shootingSpeed - 1)/4 + 0.01, intakeSpeed: (avg.intakeSpeed - 1)/4 + 0.01,
-      awareness: avg.awareness + 0.01, climb: avg.climb + 0.01, auton: (avg.auton.shoot + avg.auton.middle + avg.auton.depot + avg.auton.climb)/4 + 0.01,
-      focus: (avg.focus.scoring + avg.focus.passing + avg.focus.defense)/3 + 0.01, robotType: avg.robotType + 0.01,
-      autonShoot: avg.auton.shoot + 0.01, autonCollectMiddle: avg.auton.middle + 0.01, autonCollectDepot: avg.auton.depot + 0.01, autonClimb: avg.auton.climb + 0.01,
-      focusScoring: avg.focus.scoring + 0.01, focusPassing: avg.focus.passing + 0.01, focusDefense: avg.focus.defense + 0.01,
-      failureLostComm: (1 - avg.failures.comm) + 0.01, failureLostPower: (1 - avg.failures.power) + 0.01, failureBrokenIntake: (1 - avg.failures.intake) + 0.01,
-      failurePenalty: settings.failurePenalty
+
+    const count = filtered.length;
+    const safe = v => v / count;
+
+    avg.accuracy = safe(avg.accuracy);
+    avg.shootingSpeed = safe(avg.shootingSpeed);
+    avg.intakeSpeed = safe(avg.intakeSpeed);
+    avg.awareness = safe(avg.awareness);
+    avg.climb = safe(avg.climb);
+    avg.robotType = safe(avg.robotType);
+
+    Object.keys(avg.auton).forEach(k => avg.auton[k] = safe(avg.auton[k]));
+    Object.keys(avg.focus).forEach(k => avg.focus[k] = safe(avg.focus[k]));
+    Object.keys(avg.failures).forEach(k => avg.failures[k] = safe(avg.failures[k]));
+
+    const norm = {
+      accuracy: (avg.accuracy - 1) / 4,
+      shootingSpeed: (avg.shootingSpeed - 1) / 4,
+      intakeSpeed: (avg.intakeSpeed - 1) / 4,
+      awareness: avg.awareness,
+      climb: avg.climb,
+      robotType: avg.robotType,
+      auton: (avg.auton.shoot + avg.auton.middle + avg.auton.depot + avg.auton.climb) / 4,
+      focus: (avg.focus.scoring + avg.focus.passing + avg.focus.defense) / 3,
+      failures: (avg.failures.comm + avg.failures.power + avg.failures.intake) / 3
     };
-    const norm = (fields) => { const t = fields.reduce((s, f) => s + u[f], 0); if (t > 0) fields.forEach(f => u[f] /= t); };
-    norm(["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]);
-    norm(["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]);
-    norm(["focusScoring","focusPassing","focusDefense"]);
-    norm(["failureLostComm","failureLostPower","failureBrokenIntake"]);
-    setSettings(u);
+
+    let updated = {};
+    updated.accuracy = norm.accuracy + 0.01;
+    updated.shootingSpeed = norm.shootingSpeed + 0.01;
+    updated.intakeSpeed = norm.intakeSpeed + 0.01;
+    updated.awareness = norm.awareness + 0.01;
+    updated.climb = norm.climb + 0.01;
+    updated.auton = norm.auton + 0.01;
+    updated.focus = norm.focus + 0.01;
+    updated.robotType = norm.robotType + 0.01;
+    updated.autonShoot = avg.auton.shoot + 0.01;
+    updated.autonCollectMiddle = avg.auton.middle + 0.01;
+    updated.autonCollectDepot = avg.auton.depot + 0.01;
+    updated.autonClimb = avg.auton.climb + 0.01;
+    updated.focusScoring = avg.focus.scoring + 0.01;
+    updated.focusPassing = avg.focus.passing + 0.01;
+    updated.focusDefense = avg.focus.defense + 0.01;
+    updated.failureLostComm = (1 - avg.failures.comm) + 0.01;
+    updated.failureLostPower = (1 - avg.failures.power) + 0.01;
+    updated.failureBrokenIntake = (1 - avg.failures.intake) + 0.01;
+    updated.failurePenalty = settings.failurePenalty;
+
+    const normalize = (fields) => {
+      const t = fields.reduce((sum, f) => sum + updated[f], 0);
+      if (t === 0) return;
+      fields.forEach(f => updated[f] /= t);
+    };
+
+    normalize(["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]);
+    normalize(["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]);
+    normalize(["focusScoring","focusPassing","focusDefense"]);
+    normalize(["failureLostComm","failureLostPower","failureBrokenIntake"]);
+
+    setSettings(updated);
   };
 
-  const logout = () => { localStorage.removeItem("user"); window.location.href = "/"; };
+  const logout = () => {
+    localStorage.removeItem("user");
+    window.location.href = "/";
+  };
 
-  const TABS = [
+  const sections = [
     { id: "presets", label: "Presets" },
-    { id: "main",    label: "Main" },
-    { id: "auton",   label: "Auton" },
-    { id: "focus",   label: "Focus" },
-    { id: "fails",   label: "Fails" }
+    { id: "main", label: "Main Weights" },
+    { id: "auton", label: "Auton" },
+    { id: "focus", label: "Focus" },
+    { id: "failures", label: "Failures" }
   ];
 
-  const chipBtn = (label, active, onClick) => (
-    <button key={label} onClick={onClick} style={{
-      padding: "9px 14px", margin: 3, borderRadius: 9, fontSize: 13, fontWeight: active ? 600 : 400,
-      background: active ? "var(--blue)" : "var(--bg-elevated)",
-      border: `1px solid ${active ? "var(--blue)" : "var(--border)"}`,
-      color: active ? "white" : "var(--text-secondary)"
-    }}>
-      {label}
-    </button>
-  );
+  const cardStyle = {
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 14,
+    background: "#12121a",
+    border: "1px solid #2a2a38"
+  };
+
+  const btnStyle = (active) => ({
+    padding: "10px 16px",
+    margin: 4,
+    borderRadius: 10,
+    border: "none",
+    background: active ? "#3b82f6" : "#1a1a24",
+    color: active ? "white" : "#9898a8",
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: "pointer"
+  });
+
+  const normalizeBtn = {
+    padding: "8px 16px",
+    borderRadius: 8,
+    border: "1px solid #2a2a38",
+    background: "#1a1a24",
+    color: "#9898a8",
+    fontSize: 12,
+    fontWeight: 500,
+    marginTop: 8
+  };
 
   return (
-    <div style={{ padding: "0 14px 16px", maxWidth: 600, margin: "0 auto" }}>
-      <PageHeader title="Settings" subtitle="Scoring weights & account"
-        iconBg="var(--bg-elevated)"
-        icon={
-          <svg width="20" height="20" fill="none" stroke="var(--text-secondary)" viewBox="0 0 24 24">
+    <div style={{ padding: 16, maxWidth: 600, margin: "0 auto" }}>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 20,
+        paddingTop: 8
+      }}>
+        <div style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-        }
-      />
-
-      {/* Auto-Calibrate */}
-      <Card style={{ marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <svg width="16" height="16" fill="none" stroke="var(--blue)" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <h3 style={{ fontSize: 14 }}>Auto-Calibrate</h3>
         </div>
-        <p style={{ fontSize: 13, marginBottom: 10 }}>Enter team numbers to auto-tune weights from their data.</p>
-        <input placeholder="1234, 254, 1678" value={teamsInput} onChange={e => setTeamsInput(e.target.value)} style={{ marginBottom: 10 }} />
-        <button onClick={runCalibration} style={{ width: "100%", padding: 12, fontWeight: 600 }}>Calibrate</button>
-      </Card>
+        <div>
+          <h1 style={{ fontSize: 22, margin: 0 }}>Settings</h1>
+          <p style={{ margin: 0, fontSize: 13, color: "#6b6b78" }}>
+            Customize scoring weights
+          </p>
+        </div>
+      </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 2 }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
-            flexShrink: 0, padding: "9px 16px", borderRadius: 9, fontSize: 13, fontWeight: activeTab === t.id ? 600 : 400,
-            background: activeTab === t.id ? "var(--blue)" : "var(--bg-card)",
-            border: `1px solid ${activeTab === t.id ? "var(--blue)" : "var(--border)"}`,
-            color: activeTab === t.id ? "white" : "var(--text-secondary)"
-          }}>
-            {t.label}
+      {/* Section Tabs */}
+      <div style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6,
+        marginBottom: 16
+      }}>
+        {sections.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSection(s.id)}
+            style={btnStyle(activeSection === s.id)}
+          >
+            {s.label}
           </button>
         ))}
       </div>
 
-      {activeTab === "presets" && (
-        <Card>
-          <h3 style={{ fontSize: 14, marginBottom: 12 }}>Quick Presets</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", margin: -3, marginBottom: 16 }}>
-            {["balanced","offense","defense"].map(p => chipBtn(p.charAt(0).toUpperCase() + p.slice(1), false, () => applyPreset(p)))}
+      {/* Calibration */}
+      <div style={cardStyle}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 12
+        }}>
+          <svg width="18" height="18" fill="none" stroke="#3b82f6" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <h3 style={{ margin: 0, fontSize: 15, color: "#f0f0f5" }}>Auto-Calibrate</h3>
+        </div>
+        <p style={{ fontSize: 13, color: "#6b6b78", marginBottom: 12 }}>
+          Enter team numbers to optimize weights based on their performance.
+        </p>
+        <input
+          placeholder="1234, 254, 1678"
+          value={teamsInput}
+          onChange={(e) => setTeamsInput(e.target.value)}
+          style={{ marginBottom: 12 }}
+        />
+        <button
+          onClick={runCalibration}
+          style={{
+            width: "100%",
+            padding: 12,
+            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            borderRadius: 10,
+            fontWeight: 600
+          }}
+        >
+          Calibrate
+        </button>
+      </div>
+
+      {/* Presets Section */}
+      {activeSection === "presets" && (
+        <div style={cardStyle}>
+          <h3 style={{ fontSize: 15, marginBottom: 12, color: "#f0f0f5" }}>Quick Presets</h3>
+          <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 16 }}>
+            <button onClick={() => applyPreset("balanced")} style={btnStyle(false)}>Balanced</button>
+            <button onClick={() => applyPreset("offense")} style={btnStyle(false)}>Offense</button>
+            <button onClick={() => applyPreset("defense")} style={btnStyle(false)}>Defense</button>
           </div>
-          <div style={{ height: 1, background: "var(--border)", margin: "16px 0" }} />
-          <h3 style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 10, fontWeight: 500 }}>Custom Presets</h3>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input value={presetName} onChange={e => setPresetName(e.target.value)} placeholder="Preset name" style={{ flex: 1 }} />
-            <button onClick={savePreset} style={{ padding: "0 16px", flexShrink: 0 }}>Save</button>
+
+          <hr style={{ border: "none", borderTop: "1px solid #2a2a38", margin: "16px 0" }} />
+
+          <h4 style={{ fontSize: 13, color: "#9898a8", marginBottom: 12 }}>Custom Presets</h4>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Preset name"
+              style={{ flex: 1 }}
+            />
+            <button onClick={savePreset} style={{ ...btnStyle(true), margin: 0 }}>Save</button>
           </div>
           {Object.keys(presets).length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", margin: -3 }}>
-              {Object.keys(presets).map(p => chipBtn(p, false, () => setSettings(presets[p])))}
+            <div style={{ display: "flex", flexWrap: "wrap" }}>
+              {Object.keys(presets).map(p => (
+                <button key={p} onClick={() => loadPreset(p)} style={btnStyle(false)}>
+                  {p}
+                </button>
+              ))}
             </div>
           )}
-          <div style={{ height: 1, background: "var(--border)", margin: "16px 0" }} />
+
+          <hr style={{ border: "none", borderTop: "1px solid #2a2a38", margin: "16px 0" }} />
+
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={exportSettings} style={{ flex: 1, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", borderRadius: 9, padding: "10px 0", fontSize: 13 }}>Export</button>
-            <button onClick={importSettings} style={{ flex: 1, background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-secondary)", borderRadius: 9, padding: "10px 0", fontSize: 13 }}>Import</button>
+            <button onClick={exportSettings} style={{ ...btnStyle(false), flex: 1, margin: 0 }}>Export</button>
+            <button onClick={importSettings} style={{ ...btnStyle(false), flex: 1, margin: 0 }}>Import</button>
           </div>
-        </Card>
+        </div>
       )}
 
-      {activeTab === "main" && (
-        <Card>
+      {/* Main Weights */}
+      {activeSection === "main" && (
+        <div style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14 }}>Main Weights</h3>
-            <TotalBadge fields={["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]} />
+            <h3 style={{ margin: 0, fontSize: 15, color: "#f0f0f5" }}>Main Weights</h3>
+            {totalDisplay(total(["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]))}
           </div>
-          {["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"].map(f =>
-            <Slider key={f} label={f.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())} field={f} />
-          )}
-          <NormBtn fields={["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]} />
-        </Card>
+          {slider("Accuracy", "accuracy")}
+          {slider("Shooting Speed", "shootingSpeed")}
+          {slider("Intake Speed", "intakeSpeed")}
+          {slider("Auton", "auton")}
+          {slider("Climb", "climb")}
+          {slider("Awareness", "awareness")}
+          {slider("Focus", "focus")}
+          {slider("Robot Type", "robotType")}
+          <button
+            onClick={() => setSettings(normalizeGroup(["accuracy","shootingSpeed","intakeSpeed","auton","climb","awareness","focus","robotType"]))}
+            style={normalizeBtn}
+          >
+            Normalize to 100%
+          </button>
+        </div>
       )}
 
-      {activeTab === "auton" && (
-        <Card>
+      {/* Auton Weights */}
+      {activeSection === "auton" && (
+        <div style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14 }}>Auton Weights</h3>
-            <TotalBadge fields={["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]} />
+            <h3 style={{ margin: 0, fontSize: 15, color: "#f0f0f5" }}>Auton Weights</h3>
+            {totalDisplay(total(["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]))}
           </div>
-          <Slider label="Shoot"          field="autonShoot" />
-          <Slider label="Collect Middle" field="autonCollectMiddle" />
-          <Slider label="Collect Depot"  field="autonCollectDepot" />
-          <Slider label="Climb"          field="autonClimb" />
-          <NormBtn fields={["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]} />
-        </Card>
+          {slider("Shoot", "autonShoot")}
+          {slider("Collect Middle", "autonCollectMiddle")}
+          {slider("Collect Depot", "autonCollectDepot")}
+          {slider("Climb", "autonClimb")}
+          <button
+            onClick={() => setSettings(normalizeGroup(["autonShoot","autonCollectMiddle","autonCollectDepot","autonClimb"]))}
+            style={normalizeBtn}
+          >
+            Normalize to 100%
+          </button>
+        </div>
       )}
 
-      {activeTab === "focus" && (
-        <Card>
+      {/* Focus Weights */}
+      {activeSection === "focus" && (
+        <div style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14 }}>Focus Weights</h3>
-            <TotalBadge fields={["focusScoring","focusPassing","focusDefense"]} />
+            <h3 style={{ margin: 0, fontSize: 15, color: "#f0f0f5" }}>Focus Weights</h3>
+            {totalDisplay(total(["focusScoring","focusPassing","focusDefense"]))}
           </div>
-          <Slider label="Scoring" field="focusScoring" />
-          <Slider label="Passing" field="focusPassing" />
-          <Slider label="Defense" field="focusDefense" />
-          <NormBtn fields={["focusScoring","focusPassing","focusDefense"]} />
-        </Card>
+          {slider("Scoring", "focusScoring")}
+          {slider("Passing", "focusPassing")}
+          {slider("Defense", "focusDefense")}
+          <button
+            onClick={() => setSettings(normalizeGroup(["focusScoring","focusPassing","focusDefense"]))}
+            style={normalizeBtn}
+          >
+            Normalize to 100%
+          </button>
+        </div>
       )}
 
-      {activeTab === "fails" && (
-        <Card>
+      {/* Failure Weights */}
+      {activeSection === "failures" && (
+        <div style={cardStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14 }}>Failure Penalties</h3>
-            <TotalBadge fields={["failureLostComm","failureLostPower","failureBrokenIntake"]} />
+            <h3 style={{ margin: 0, fontSize: 15, color: "#f0f0f5" }}>Failure Penalties</h3>
+            {totalDisplay(total(["failureLostComm","failureLostPower","failureBrokenIntake"]))}
           </div>
-          <Slider label="Lost Communication" field="failureLostComm" />
-          <Slider label="Lost Power"         field="failureLostPower" />
-          <Slider label="Broken Intake"      field="failureBrokenIntake" />
-          <Slider label="Overall Penalty"    field="failurePenalty" />
-          <NormBtn fields={["failureLostComm","failureLostPower","failureBrokenIntake"]} />
-        </Card>
+          {slider("Lost Communication", "failureLostComm")}
+          {slider("Lost Power", "failureLostPower")}
+          {slider("Broken Intake", "failureBrokenIntake")}
+          {slider("Overall Penalty", "failurePenalty")}
+          <button
+            onClick={() => setSettings(normalizeGroup(["failureLostComm","failureLostPower","failureBrokenIntake"]))}
+            style={normalizeBtn}
+          >
+            Normalize to 100%
+          </button>
+        </div>
       )}
 
       {/* Logout */}
       <button
         onClick={logout}
         style={{
-          width: "100%", padding: 14, marginTop: 14,
-          background: "transparent", border: "1px solid var(--red-border)",
-          color: "var(--red)", borderRadius: 12, fontWeight: 600, fontSize: 14
+          width: "100%",
+          padding: 16,
+          background: "transparent",
+          border: "1px solid #ef4444",
+          color: "#ef4444",
+          borderRadius: 12,
+          fontWeight: 600,
+          marginTop: 8
         }}
       >
         Log Out
