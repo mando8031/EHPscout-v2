@@ -1,9 +1,11 @@
 
 module.exports = {
-  pwa: {
-    dest: 'public',  // The folder where the PWA assets will be placed
-    register: true,
-    skipWaiting: true,
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
+  ],
+  theme: {
+    extend: {},
   },
-  // Other Next.js configurations
+  plugins: [],
 };

@@ -1,12 +1,15 @@
-const API_KEY = process.env.REACT_APP_TBA_KEY;
+const API_KEY = process.env.REACT_APP_TBA_KEY || null;
 const BASE_URL = "https://www.thebluealliance.com/api/v3";
 
 export async function getEvents(year) {
   try {
+    const headers = {};
+    if (API_KEY) {
+      headers["X-TBA-Auth-Key"] = API_KEY;
+    }
+    
     const res = await fetch(`${BASE_URL}/events/${year}`, {
-      headers: {
-        "X-TBA-Auth-Key": API_KEY
-      }
+      headers
     });
 
     const data = await res.json();
@@ -27,10 +30,13 @@ export async function getEvents(year) {
 export async function getMatches(eventKey) {
   if (!eventKey) return [];
 
+  const headers = {};
+  if (API_KEY) {
+    headers["X-TBA-Auth-Key"] = API_KEY;
+  }
+
   const res = await fetch(`${BASE_URL}/event/${eventKey}/matches`, {
-    headers: {
-      "X-TBA-Auth-Key": API_KEY
-    }
+    headers
   });
 
   const data = await res.json();
