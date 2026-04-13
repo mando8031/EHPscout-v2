@@ -16,7 +16,8 @@
 "pako": "^2.1.0",
 "@capacitor/core": "^6.0.0",
 "react": "^18.0.0",
-"react-dom": "^18.0.0"
+"react-dom": "^18.0.0",
+"pwaify": "^1.0.0"  // Add this line to include pwaify
 },
 
 "devDependencies": {
